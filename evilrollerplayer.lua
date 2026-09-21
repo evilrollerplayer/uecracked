@@ -15,9 +15,9 @@ local function ResolveGlobalEnv()
         end
     end
     for _, env in ipairs(candidates) do
-        local wrote = pcall(function() env.__frekksHailEnvProbe = true end)
-        local seen = __frekksHailEnvProbe == true
-        pcall(function() env.__frekksHailEnvProbe = nil end)
+        local wrote = pcall(function() env.__FrekksHailEnvProbe = true end)
+        local seen = __FrekksHailEnvProbe == true
+        pcall(function() env.__FrekksHailEnvProbe = nil end)
         if wrote and seen then
             return env
         end
@@ -30,11 +30,11 @@ local __frekks_hook_genv = ResolveGlobalEnv()
 -- _G mirror: the resolved env can be a per-execution table on executors with a
 -- broken getgenv, so the "already running" guard also needs a table that
 -- survives re-execution. The Unload button clears both flags.
-if __s_hook_genv.Executed or _G.__sHailExecuted then
+if __frekks_hook_genv.Executed or _G.__FrekksHailExecuted then
     return
 end
-__s_hook_genv.Executed = true
-pcall(function() _G.__sHailExecuted = true end)
+__frekks_hook_genv.Executed = true
+pcall(function() _G.__FrekksHailExecuted = true end)
 
 -- -----------------------------------------------------------------------------
 -- Executor capability stubs
@@ -42,10 +42,10 @@ pcall(function() _G.__sHailExecuted = true end)
 -- Executors vary wildly in which functions they implement. Rather than sprinkle
 -- `if type(x) == 'function'` everywhere, install harmless no-op stubs for the
 -- missing ones and remember which names were stubbed. Features then ask
--- sHailCaps whether support is real before enabling themselves.
+-- FrekksHailCaps whether support is real before enabling themselves.
 do
     local _noop = function() end
-    local _genv = __s_hook_genv
+    local _genv = __frekks_hook_genv
     local _stubs = {
         getconnections    = function() return {} end,
         hookmetamethod    = function(obj, method, hook) return nil end,
@@ -80,7 +80,7 @@ do
     }
     -- Every name that got a stub (or was found missing/broken) lands in
     -- _stubbed. Stubs keep bare calls from hard-erroring, but they also make
-    -- `type(fn) == 'function'` checks lie -- sHailCaps below is the only
+    -- `type(fn) == 'function'` checks lie -- FrekksHailCaps below is the only
     -- honest way to ask "does this executor really support X".
     local _stubbed = {}
     for name, stub in pairs(_stubs) do
@@ -141,7 +141,7 @@ do
         _debugExt['debug.' .. name] = (ok and type(value) == 'function') or false
     end
 
-    _genv.sHailCaps = {
+    _genv.FrekksHailCaps = {
         stubbed = _stubbed,
         -- has('name') / has('debug.getupvalue'): true only when the executor
         -- provides a real implementation (existence only -- a function that
@@ -189,26 +189,26 @@ repeat task.wait() until game:IsLoaded()
 -- (Library.ScreenGui, NotificationArea) inherit an identity whose property
 -- writes can throw "lacking capability Plugin" when the Notify path runs
 -- FillInstance against a fresh Frame.
-local function __sHailElevateIdentity()
+local function __FrekksHailElevateIdentity()
     if type(setthreadidentity) == 'function' then
         pcall(setthreadidentity, 8)
     end
 end
-__sHailElevateIdentity()
+__FrekksHailElevateIdentity()
 
 -- -----------------------------------------------------------------------------
 -- Shared module registry
 -- -----------------------------------------------------------------------------
 -- The build script concatenates every module into one file. Each one is emitted
--- as `__s_hook_shared.<name> = function() ... end` at the injection marker
+-- as `__frekks_hook_shared.<name> = function() ... end` at the injection marker
 -- below, and RequireSharedModule runs it once and caches the result -- the same
 -- contract as Roblox's require(), without needing real ModuleScripts.
-local __s_hook_shared = {}
+local __frekks_hook_shared = {}
 
 local __shared_module_cache = {}
 
 local function RequireSharedModule(name)
-    if type(__s_hook_shared) ~= 'table' then
+    if type(__frekks_hook_shared) ~= 'table' then
         error('Missing shared module table')
     end
 
@@ -217,7 +217,7 @@ local function RequireSharedModule(name)
         return cached
     end
 
-    local loader = __s_hook_shared[name]
+    local loader = __frekks_hook_shared[name]
     if type(loader) ~= 'function' then
         error('Missing shared module: ' .. tostring(name))
     end
@@ -233,7 +233,7 @@ end
 local Library = nil
 local ErrorReporter = nil
 
-__s_hook_shared.linoria_library = function()
+__frekks_hook_shared.linoria_library = function()
 -- mstudio45/LinoriaLib; bundled with UI compatibility changes.
 local cloneref = (cloneref or clonereference or function(instance: any)
 	return instance
@@ -9914,7 +9914,7 @@ __frekks_hook_shared.script_paths = function()
 --  Owns every file this script touches on your machine. All of it lives under a
 --  single folder in your executor's workspace directory:
 --
---      <executor workspace>/frekksHail/
+--      <executor workspace>/FrekksHail/
 --          UISettings.json                  general menu preferences
 --          AutoShow.txt                     mirror of the "auto show" preference
 --          settings/<config>.json           saved feature configs
@@ -9927,15 +9927,15 @@ __frekks_hook_shared.script_paths = function()
 -- Change these two to rename the script. DisplayName is what the menu title bar
 -- shows; StorageRoot is the folder name on disk (renaming it orphans any configs
 -- already saved under the old name).
-local DisplayName = "Evil Roller Player KYOTOO CRACKED THIS"
-local StorageRoot = 'evilrollerplayer.lua'
+local DisplayName = "EvilRollerPlayer FUCKED THIS"
+local StorageRoot = 'Frekks Hail v3'
 
 -- Where queue_on_teleport should re-read the script from when "Auto Execute on
 -- Teleport" is enabled. Save the built script to this path (relative to your
 -- executor's workspace folder) for that option to work. If you load the script
 -- from a URL instead, replace the body of queue_on_teleport_script() below with
 -- your own loadstring line.
-local LocalScriptPath = StorageRoot .. '/evilrollerplayer.lua'
+local LocalScriptPath = StorageRoot .. '/FrekksHail_Source_Runnable.lua'
 
 local AutoShowPath = StorageRoot .. '/AutoShow.txt'
 local UiSettingsPath = StorageRoot .. '/UISettings.json'
@@ -10095,14 +10095,14 @@ function module.queue_on_teleport_script()
         if not game:IsLoaded() then game.Loaded:Wait() end
         local ok, source = pcall(function() return readfile(%q) end)
         if not ok or type(source) ~= 'string' or #source == 0 then
-            warn("[frekk's Hail] Auto Execute: the saved script is missing. Run the full script again.")
+            warn("[Frekk's Hail] Auto Execute: the saved script is missing. Run the full script again.")
             return
         end
-        local run, err = loadstring(source, "frekksHail")
-        if not run then warn("[frekk's Hail] Auto Execute: " .. tostring(err)); return end
+        local run, err = loadstring(source, "FrekksHail")
+        if not run then warn("[Frekk's Hail] Auto Execute: " .. tostring(err)); return end
         local env = type(getgenv) == 'function' and getgenv() or _G
         env.Executed = nil
-        _G.__frekksHailExecuted = nil
+        _G.__FrekksHailExecuted = nil
         run()
     ]==], LocalScriptPath)
 end
@@ -10232,9 +10232,9 @@ function module.new(args)
         return math.clamp(value, minimum, maximum)
     end
     local preferenceIds = {
-        'MenuKeybind', 'P3S1T3', 'frekksMenuOpacity', 'frekksKeybindMenuMode',
-        'frekksNotifications', 'P3S1T2', 'frekksNotificationSide', 'frekksNotificationDuration',
-        'frekksBackgroundImage', 'P3S1T4', 'AutoExecuteKeybind',
+        'MenuKeybind', 'P3S1T3', 'FrekksMenuOpacity', 'FrekksKeybindMenuMode',
+        'FrekksNotifications', 'P3S1T2', 'FrekksNotificationSide', 'FrekksNotificationDuration',
+        'FrekksBackgroundImage', 'P3S1T4', 'AutoExecuteKeybind',
     }
     local function persist()
         if building or stopped then return end
@@ -10301,8 +10301,8 @@ function module.new(args)
             end
         end
     end
-    menu:AddSlider('frekksMenuOpacity', {
-        Text = 'Menu Transparency', Default = readNumber('frekksMenuOpacity', 100, 0, 100),
+    menu:AddSlider('FrekksMenuOpacity', {
+        Text = 'Menu Transparency', Default = readNumber('FrekksMenuOpacity', 100, 0, 100),
         Min = 0, Max = 100, Rounding = 0, Suffix = '%', Compact = true,
         Callback = function(value) applyOpacity(value); persist() end,
     })
@@ -10313,31 +10313,31 @@ function module.new(args)
         end
         persist()
     end
-    menu:AddDropdown('frekksKeybindMenuMode', {
+    menu:AddDropdown('FrekksKeybindMenuMode', {
         Text = 'Keybind Menu Mode', Values = { 'Toggled', 'Always' },
-        Default = prefs.frekksKeybindMenuMode == 'Always' and 'Always' or 'Toggled', Callback = applyKeybindMode,
+        Default = prefs.FrekksKeybindMenuMode == 'Always' and 'Always' or 'Toggled', Callback = applyKeybindMode,
     })
-    notifications:AddToggle('frekksNotifications', { Text = 'Notifications', Default = prefs.frekksNotifications ~= false, Callback = persist })
+    notifications:AddToggle('FrekksNotifications', { Text = 'Notifications', Default = prefs.FrekksNotifications ~= false, Callback = persist })
     notifications:AddToggle('P3S1T2', { Text = 'Load notification', Default = prefs.P3S1T2 ~= false, Callback = persist })
-    notifications:AddDropdown('frekksNotificationSide', {
-        Text = 'Position', Values = { 'Left', 'Right' }, Default = prefs.frekksNotificationSide == 'Right' and 'Right' or 'Left',
+    notifications:AddDropdown('FrekksNotificationSide', {
+        Text = 'Position', Values = { 'Left', 'Right' }, Default = prefs.FrekksNotificationSide == 'Right' and 'Right' or 'Left',
         Callback = function(value) library:SetNotifySide(value); persist() end,
     })
-    notifications:AddSlider('frekksNotificationDuration', {
-        Text = 'Duration', Min = 1, Max = 10, Default = readNumber('frekksNotificationDuration', 4, 1, 10),
+    notifications:AddSlider('FrekksNotificationDuration', {
+        Text = 'Duration', Min = 1, Max = 10, Default = readNumber('FrekksNotificationDuration', 4, 1, 10),
         Rounding = 0, Suffix = 's', Callback = persist,
     })
     library.Notify = function(self, text, duration, ...)
-        if not toggles.frekksNotifications.Value then return nil end
+        if not toggles.FrekksNotifications.Value then return nil end
         if type(text) == 'table' then
             text = table.clone(text)
-            text.Time = text.Time or options.frekksNotificationDuration.Value
+            text.Time = text.Time or options.FrekksNotificationDuration.Value
         end
-        return originalNotify(self, text, duration or options.frekksNotificationDuration.Value, ...)
+        return originalNotify(self, text, duration or options.FrekksNotificationDuration.Value, ...)
     end
 
     local config = tab:AddRightGroupbox('Configuration')
-    config:AddInput('frekksNewConfigName', { Text = 'Config name', Default = '', AllowEmpty = true, Finished = true })
+    config:AddInput('FrekksNewConfigName', { Text = 'Config name', Default = '', AllowEmpty = true, Finished = true })
     local configNames = sm:RefreshConfigList()
     config:AddDropdown('UILoadConfigName', {
         Text = 'Config list', Values = configNames, AllowNull = true,
@@ -10362,7 +10362,7 @@ function module.new(args)
         refreshAutoload()
     end
     config:AddButton({ Text = 'Create config', Func = action(function()
-        local name = validName(options.frekksNewConfigName.Value)
+        local name = validName(options.FrekksNewConfigName.Value)
         if isfile(paths.config_path(name)) then error('That config already exists. Use Overwrite config.', 0) end
         check(args.on_save(name))
         refreshConfigs(name)
@@ -10392,13 +10392,13 @@ function module.new(args)
     autoloadLabel = config:AddLabel('Current autoload config: ' .. (autoloadValid and autoloadName or 'none'), true)
     config:AddDivider()
     local importing = false
-    config:AddInput('frekksImportSource', {
+    config:AddInput('FrekksImportSource', {
         Text = 'Import from clipboard', Placeholder = 'Paste config here...', Default = '', AllowEmpty = true, Finished = true,
         Callback = action(function(text)
             if importing or text == '' then return end
             local doc = http:JSONDecode(text)
             if type(doc) ~= 'table' or type(doc.objects) ~= 'table' then error('Paste a saved config JSON.', 0) end
-            local name = validName(options.frekksNewConfigName.Value ~= '' and options.frekksNewConfigName.Value or doc.name)
+            local name = validName(options.FrekksNewConfigName.Value ~= '' and options.FrekksNewConfigName.Value or doc.name)
             if isfile(paths.config_path(name)) then error('Choose a new config name before importing.', 0) end
             for _, object in pairs(doc.objects) do
                 if type(object) ~= 'table' or type(object.idx) ~= 'string' or type(object.type) ~= 'string' then
@@ -10409,7 +10409,7 @@ function module.new(args)
             sm:CheckFolderTree()
             writefile(paths.config_path(name), http:JSONEncode(doc))
             refreshConfigs(name)
-            importing = true; options.frekksImportSource:SetValue(''); importing = false
+            importing = true; options.FrekksImportSource:SetValue(''); importing = false
             notify('Imported ' .. name .. '. Press Load config to apply it.')
         end),
     })
@@ -10429,8 +10429,8 @@ function module.new(args)
         themes:AddLabel(field[2]):AddColorPicker(field[1], { Default = library[field[1]] })
         options[field[1]]:OnChanged(function() tm:ThemeUpdate() end)
     end
-    background:AddInput('frekksBackgroundImage', {
-        Text = 'Background image asset ID', Default = type(prefs.frekksBackgroundImage) == 'string' and prefs.frekksBackgroundImage or '',
+    background:AddInput('FrekksBackgroundImage', {
+        Text = 'Background image asset ID', Default = type(prefs.FrekksBackgroundImage) == 'string' and prefs.FrekksBackgroundImage or '',
         AllowEmpty = true, Finished = true,
         Callback = function(value) window:SetBackgroundImage(value); persist() end,
     })
@@ -10484,7 +10484,7 @@ function module.new(args)
     themes:AddButton({ Text = 'Refresh', Func = action(function() refreshThemes() end) })
     tab:AddRightGroupbox('lua'):AddLabel('in development')
 
-    local ignore = { 'UILoadConfigName', 'frekksNewConfigName', 'frekksImportSource', 'RiskColor', 'VideoLink',
+    local ignore = { 'UILoadConfigName', 'FrekksNewConfigName', 'FrekksImportSource', 'RiskColor', 'VideoLink',
         'P3S1T1', 'P3S1T4', 'P3S1T5', 'UIAutoSaveConfig' }
     for _, id in ipairs(preferenceIds) do ignore[#ignore + 1] = id end
     for _, id in ipairs(args.extra_ignore_ids or {}) do ignore[#ignore + 1] = id end
@@ -10510,7 +10510,7 @@ function module.new(args)
             teleportConnection = nil
         end
         if enabled and not teleportConnection and not stopped
-            and __frekks_hook_genv.frekksHailCaps.gate('Auto Execute', 'queue_on_teleport') then
+            and __frekks_hook_genv.FrekksHailCaps.gate('Auto Execute', 'queue_on_teleport') then
             teleportConnection = args.local_player.OnTeleport:Connect(function(state)
                 if not stopped and toggles.P3S1T4.Value and state == Enum.TeleportState.InProgress then args.queue_loader() end
             end)
@@ -10525,10 +10525,10 @@ function module.new(args)
     function settings:register_callbacks() end
     function settings:reconcile_loaded_ui_settings()
         if library.KeybindFrame then library.KeybindFrame.Visible = toggles.P3S1T3.Value end
-        applyKeybindMode(options.frekksKeybindMenuMode.Value)
-        library:SetNotifySide(options.frekksNotificationSide.Value)
-        applyOpacity(options.frekksMenuOpacity.Value)
-        window:SetBackgroundImage(options.frekksBackgroundImage.Value)
+        applyKeybindMode(options.FrekksKeybindMenuMode.Value)
+        library:SetNotifySide(options.FrekksNotificationSide.Value)
+        applyOpacity(options.FrekksMenuOpacity.Value)
+        window:SetBackgroundImage(options.FrekksBackgroundImage.Value)
         self:sync_queue_on_teleport()
         refreshConfigs()
     end
@@ -10545,8 +10545,8 @@ __frekks_hook_shared.game_bootstrap = function()
 local module = {}
 
 local function elevate_ui_identity()
-    if type(__frekksHailElevateIdentity) == 'function' then
-        __frekksHailElevateIdentity()
+    if type(__FrekksHailElevateIdentity) == 'function' then
+        __FrekksHailElevateIdentity()
     elseif type(setthreadidentity) == 'function' then
         pcall(setthreadidentity, 8)
     end
@@ -10609,7 +10609,7 @@ function module.create_standard_shared_ui(args)
             -- args.queue_on_teleport is Header's safe no-op capture when the
             -- executor lacks the real function; gate so the reload silently
             -- not happening comes with an explanation
-            if __frekks_hook_genv.frekksHailCaps.gate('Auto Execute', 'queue_on_teleport') then
+            if __frekks_hook_genv.FrekksHailCaps.gate('Auto Execute', 'queue_on_teleport') then
                 local loader, err = args.script_paths.queue_on_teleport_script()
                 if not loader then
                     args.library:Notify(err)
@@ -10758,7 +10758,7 @@ __frekks_hook_shared.rivals_ragebot_kernel = function()
 -- so the kernel works wherever it is emitted.
 --
 -- It fires the fighter combat remote directly and uses metatable / getgc / debug
--- surfaces. That is frekks's original method, reproduced rather than softened.
+-- surfaces. That is Frekks's original method, reproduced rather than softened.
 return {
     init = function(ctx)
         local RivalsRuntimeBridge = ctx.RivalsRuntimeBridge
@@ -10768,9 +10768,9 @@ return {
         local GetChar = ctx.GetChar
         local GetRoot = ctx.GetRoot
         local __frekks_hook_genv = ctx.Genv
-        -- __frekkS_RAGEBOT_BEGIN__
-            local frekksHailRagebot = {}
-            RivalsRuntimeBridge.frekksHailRagebot = frekksHailRagebot
+        -- __FREKKS_RAGEBOT_BEGIN__
+            local FrekksHailRagebot = {}
+            RivalsRuntimeBridge.FrekksHailRagebot = FrekksHailRagebot
 
             local RunService = game:GetService('RunService')
             local HttpServiceRB = cloneref(game:GetService('HttpService'))
@@ -10802,7 +10802,7 @@ return {
                 end
             end
 
-            -- ---- settings (read live from the Linoria controls; frekks defaults as fallback) ----
+            -- ---- settings (read live from the Linoria controls; Frekks defaults as fallback) ----
             local function optValue(id, default)
                 local o = Options and Options[id]
                 if o and o.Value ~= nil then
@@ -10830,10 +10830,10 @@ return {
                 RandomBaseRadius = function() return optValue('P8S4S4', 100) end,
                 RandomRadiusFactor = function() return optValue('P8S4S5', 0.5) end,
                 RandomAnchorFromCharacter = function() return togValue('P8S4T8', false) end,
-                -- ProjectileBreaker has no frekks UI; RepositionInterval keeps frekks's default.
+                -- ProjectileBreaker has no Frekks UI; RepositionInterval keeps Frekks's default.
                 RepositionInterval = function() return 0.3 end,
             }
-            -- frekks's ProjectileBreaker depth constants (config present in frekks; no UI slider).
+            -- Frekks's ProjectileBreaker depth constants (config present in Frekks; no UI slider).
             local PB_DEPTH_FORWARD = { Min = 0, Max = 4 }
             local PB_DEPTH_FORWARD_FREQ = 5
             local PB_DEPTH_UP = { Min = 0, Max = 5.5 }
@@ -10976,7 +10976,7 @@ return {
                 return nil
             end
 
-            -- ---- firing transport (frekks t157/t16, lines 73511 / 88523 / 88535) ----------
+            -- ---- firing transport (Frekks t157/t16, lines 73511 / 88523 / 88535) ----------
             local function fireGun(objectId, isRaycast, aim1, aim2, hitboxHead, extra)
                 local remote = resolveUseItemRemote()
                 local token = enc('StartShooting')
@@ -11004,7 +11004,7 @@ return {
             end
             local function fireMeleeHeavy(objectId, a, b, c, d)
                 local remote = resolveUseItemRemote()
-                local token = enc('StartAiming') -- frekks HeavyAttackEncoded uses StartAiming
+                local token = enc('StartAiming') -- Frekks HeavyAttackEncoded uses StartAiming
                 local anim = enc('HeavyAttackAnimation1')
                 if not remote or not token or not anim or not objectId then
                     return false
@@ -11054,7 +11054,7 @@ return {
                 end
                 return reserve
             end
-            -- frekks t157:IsReloading (lines 73560-73573): _reload_cooldown OR _shoot_cooldown_no_ammo.
+            -- Frekks t157:IsReloading (lines 73560-73573): _reload_cooldown OR _shoot_cooldown_no_ammo.
             local function itemIsReloading(item)
                 local now = tick()
                 local cooldown = rawget(item, '_reload_cooldown')
@@ -11064,19 +11064,19 @@ return {
                 local noAmmoCooldown = rawget(item, '_shoot_cooldown_no_ammo')
                 return type(noAmmoCooldown) == 'number' and now < noAmmoCooldown
             end
-            -- frekks t157:IsMagFull (line 73575): Info.MaxAmmo <= current ammo.
+            -- Frekks t157:IsMagFull (line 73575): Info.MaxAmmo <= current ammo.
             local function itemIsMagFull(item)
                 local info = itemInfo(item)
                 local maxAmmo = info and rawget(info, 'MaxAmmo')
                 return type(maxAmmo) == 'number' and maxAmmo <= itemAmmo(item)
             end
-            -- frekks t157:IsEquipped (line 73501): the item's own IsEquipped field - the same
+            -- Frekks t157:IsEquipped (line 73501): the item's own IsEquipped field - the same
             -- read the game's Items modules (Minigun, Riot Shield) use. The fighter-side
-            -- Data.EquippedItemID compare it replaced never matched frekks and is gone.
+            -- Data.EquippedItemID compare it replaced never matched Frekks and is gone.
             local function itemIsEquipped(item)
                 return rawget(item, 'IsEquipped')
             end
-            -- frekks t157:Equip (lines 73493-73499): no-op when equipped, then
+            -- Frekks t157:Equip (lines 73493-73499): no-op when equipped, then
             -- item.ClientFighter:EquipItem(index). ClientFighter lives on the ITEM (the
             -- LocalFighter IS a ClientFighter and has no such field; live-verified),
             -- and index is the fighter's Items-table key - the exact value the game's
@@ -11090,7 +11090,7 @@ return {
                     pcall(function() clientFighter:EquipItem(index) end)
                 end
             end
-            -- frekks t157:Reload guard (lines 73539-73546).
+            -- Frekks t157:Reload guard (lines 73539-73546).
             local function reloadItem(item)
                 if itemIsReloading(item) or itemAmmoReserve(item) <= 0 or itemIsMagFull(item) then
                     return
@@ -11116,7 +11116,7 @@ return {
             local PITCH_ABOVE = -math.pi / 2                                               -- v140
             local PITCH_BELOW = math.pi / 2                                                -- v141
 
-            -- Riot-Shield-aware above/below classifier (frekks ia(), lines 151550-151570).
+            -- Riot-Shield-aware above/below classifier (Frekks ia(), lines 151550-151570).
             -- "None" for shield-less targets (common case) folds to Above.  Enemy
             -- itemObserver/camera are best-effort on this build; shield-less path is exact.
             local function classifyAboveBelow(target)
@@ -11152,7 +11152,7 @@ return {
                 return classifyAboveBelow(target) ~= 'Below'
             end
 
-            -- ---- root virtualization (frekks t201, lines 145034-145080) -------------------
+            -- ---- root virtualization (Frekks t201, lines 145034-145080) -------------------
             local RootDesync = {}
             RootDesync.__index = RootDesync
             function RootDesync.new(rootPart)
@@ -11194,7 +11194,7 @@ return {
                 pcall(function() RunService:UnbindFromRenderStep(self._boundId) end)
             end
 
-            -- ---- view-angle driver (frekks t1141, lines 196889-197137) --------------------
+            -- ---- view-angle driver (Frekks t1141, lines 196889-197137) --------------------
             -- Hooks ClientFighterCharacterJoints.Update + FighterController._CameraReplicationLoop
             -- to inject a spoofed CameraRotationRaw so the replicated camera does not stare at the
             -- void.  Two deobfuscator artifacts are reconstructed to their unambiguous intent
@@ -11374,7 +11374,7 @@ return {
                 end
             end
 
-            -- ---- character controller wrapper (frekks t4, lines 25419-25541) --------------
+            -- ---- character controller wrapper (Frekks t4, lines 25419-25541) --------------
             local CharacterController = {}
             CharacterController.__index = CharacterController
             function CharacterController.new(rootPart)
@@ -11409,8 +11409,8 @@ return {
                 end
             end
 
-            -- ---- forced-crouch state hook (frekks t192, lines 12022-12081, simplified) -----
-            -- frekks additionally installs a dummy _UpdateServerState to suppress the game's
+            -- ---- forced-crouch state hook (Frekks t192, lines 12022-12081, simplified) -----
+            -- Frekks additionally installs a dummy _UpdateServerState to suppress the game's
             -- own conflicting sends; the essential forcing is firing UpdateState directly.
             local StateHook = {}
             StateHook.__index = StateHook
@@ -11441,7 +11441,7 @@ return {
                 end
             end
 
-            -- ---- part glue (frekks t116, lines 150715-150820) -----------------------------
+            -- ---- part glue (Frekks t116, lines 150715-150820) -----------------------------
             local VOID_CFRAME = CFrame.new(
                 math.random(-100000, -10000),
                 100000,
@@ -11535,7 +11535,7 @@ return {
                 end
             end
 
-            -- ---- enemy target list + validity (frekks t190, lines 92617-92664) ------------
+            -- ---- enemy target list + validity (Frekks t190, lines 92617-92664) ------------
             local function isEnemyPlayer(player)
                 if player == nil or player == LPRB then
                     return false
@@ -11629,7 +11629,7 @@ return {
                 return false
             end
 
-            -- ---- weapon selection (frekks t34.getAction, lines 122419-122490) -------------
+            -- ---- weapon selection (Frekks t34.getAction, lines 122419-122490) -------------
             local function itemCategory(slotIndex)
                 if slotIndex == 1 then
                     return 'Primary'
@@ -11659,9 +11659,9 @@ return {
                     return nil
                 end
                 local onEmpty = Setting.OnEmpty()
-                local priorityList = {} -- frekks default Priority = {} (all equal; first-found wins)
+                local priorityList = {} -- Frekks default Priority = {} (all equal; first-found wins)
                 -- The slot is the Items-table key (1=Primary, 2=Secondary, 3=Melee - the game's
-                -- own EquipPrimary input is EquipItem(1)). frekks's registry passes the same key
+                -- own EquipPrimary input is EquipItem(1)). Frekks's registry passes the same key
                 -- into its wrapper as .index; ClientItems carry no index field of their own.
                 local bestAttack, bestAttackPri, bestAttackIndex = nil, math.huge, nil
                 local bestSwap, bestSwapPri, bestSwapIndex = nil, math.huge, nil
@@ -11714,7 +11714,7 @@ return {
                 return { type = 'Attack', item = bestAttack, itemType = itemType(bestAttack), index = bestAttackIndex }
             end
 
-            -- ---- shoot lock (frekks t93, lines 65724-65750) -------------------------------
+            -- ---- shoot lock (Frekks t93, lines 65724-65750) -------------------------------
             local ShootLock = {}
             ShootLock.__index = ShootLock
             function ShootLock.new()
@@ -11735,7 +11735,7 @@ return {
                 self._lockedUntil = nil
             end
 
-            -- ---- spatial limit gate (frekks t98, lines 142617-142668) ---------------------
+            -- ---- spatial limit gate (Frekks t98, lines 142617-142668) ---------------------
             local SPATIAL_BOUND = 4194304
             local function outOfSpatialBound(pos)
                 return SPATIAL_BOUND <= math.abs(pos.X) or SPATIAL_BOUND <= math.abs(pos.Y) or SPATIAL_BOUND <= math.abs(pos.Z)
@@ -11774,7 +11774,7 @@ return {
                 return true
             end
 
-            -- ---- defensive module (frekks t156, lines 151628-151664) ----------------------
+            -- ---- defensive module (Frekks t156, lines 151628-151664) ----------------------
             local function localShieldStance(fighter)
                 local items = fighter and rawget(fighter, 'Items') or nil
                 if type(items) ~= 'table' then
@@ -11807,7 +11807,7 @@ return {
                 return { kind = 'Normalized', pitch = pitch, yaw = rbRandom:NextNumber(0, 360) }
             end
 
-            -- ---- evasion (frekks f573 / f4230 / t167 / t103) ------------------------------
+            -- ---- evasion (Frekks f573 / f4230 / t167 / t103) ------------------------------
             local FAR_AXIS = 1073741824
             local function ringPoint(anchor, minR, maxR)
                 local angle = rbRandom:NextNumber(0, 2 * math.pi)
@@ -11839,7 +11839,7 @@ return {
                 return scatterFar(clientCF.Position, Setting.RandomAnchorFromCharacter(), Setting.RandomBaseRadius(), Setting.RandomRadiusFactor())
             end
             local function translocateEvade(clientCF, hasTargetsNow)
-                -- frekks fallback (t103.compute): a far ring-scatter (v107(pos, 10000, 1e9)).
+                -- Frekks fallback (t103.compute): a far ring-scatter (v107(pos, 10000, 1e9)).
                 if not hasTargetsNow then
                     return ringPoint(clientCF.Position, 10000, 1000000000)
                 end
@@ -11882,7 +11882,7 @@ return {
                 end
                 return false
             end
-            -- frekks's f6204 (surface descriptor from a part face) is erased; reconstructed as the
+            -- Frekks's f6204 (surface descriptor from a part face) is erased; reconstructed as the
             -- part's top-face frame - the only shape consistent with surfaceCFrame's fields.
             local function describeSurface(part)
                 local cf = part.CFrame
@@ -11988,7 +11988,7 @@ return {
                 self._lastBreakSurface = nil
             end
 
-            -- ---- firing strategies (frekks t96 hitscan / t98 melee) -----------------------
+            -- ---- firing strategies (Frekks t96 hitscan / t98 melee) -----------------------
             local function farMiss()
                 return CFrame.new(
                     math.random(-1000000, 1000000),
@@ -12117,7 +12117,7 @@ return {
                 table.clear(self._cooldowns)
             end
 
-            -- ---- FFlag environment toggles (frekks SetEnabled, lines 63538-63571) ----------
+            -- ---- FFlag environment toggles (Frekks SetEnabled, lines 63538-63571) ----------
             local ORIGINAL_FALLEN_PARTS_HEIGHT = nil
             local function applyEnabledFFlags(enabled)
                 if enabled and ORIGINAL_FALLEN_PARTS_HEIGHT == nil then
@@ -12133,7 +12133,7 @@ return {
                 end
             end
 
-            -- ---- controller (frekks t1, lines 63573-63758) --------------------------------
+            -- ---- controller (Frekks t1, lines 63573-63758) --------------------------------
             local Controller = {}
             Controller.__index = Controller
             function Controller.new()
@@ -12321,7 +12321,7 @@ return {
                 end
                 return controllerInstance
             end
-            function frekksHailRagebot.IsEnabled()
+            function FrekksHailRagebot.IsEnabled()
                 if not togValue('P8S4T1', false) then
                     return false
                 end
@@ -12331,10 +12331,10 @@ return {
                 -- gate) instead of running the loop's side effects for nothing.
                 -- Checked after the toggle so the notice fires at enable, not at load;
                 -- cached because this runs per-frame.
-                if frekksHailRagebot.CapsOk == nil then
-                    frekksHailRagebot.CapsOk = __frekks_hook_genv.frekksHailCaps.gate('Ragebot', 'getgc', 'sethiddenproperty')
+                if FrekksHailRagebot.CapsOk == nil then
+                    FrekksHailRagebot.CapsOk = __frekks_hook_genv.FrekksHailCaps.gate('Ragebot', 'getgc', 'sethiddenproperty')
                 end
-                if not frekksHailRagebot.CapsOk then
+                if not FrekksHailRagebot.CapsOk then
                     return false
                 end
                 -- Practice / shooting range: the ragebot must never act here (target dummies, no real
@@ -12346,36 +12346,36 @@ return {
                 if localDuel and localDuel.Seeded and localDuel.IsInShootingRange == true then
                     return false
                 end
-                -- Enabled AND keybind-active (frekks ObserveEnabledKeybind); Mode 'Always' -> always true.
+                -- Enabled AND keybind-active (Frekks ObserveEnabledKeybind); Mode 'Always' -> always true.
                 local keypicker = Options and Options.P8S4T1K
                 if keypicker and type(keypicker.GetState) == 'function' then
                     return keypicker:GetState() == true
                 end
                 return true
             end
-            function frekksHailRagebot.Update(dt)
+            function FrekksHailRagebot.Update(dt)
                 local controller = ensureController()
-                local enabled = frekksHailRagebot.IsEnabled()
+                local enabled = FrekksHailRagebot.IsEnabled()
                 if controller._enabled ~= enabled then
                     controller:SetEnabled(enabled)
                 end
                 controller:Update(dt or 0)
             end
-            function frekksHailRagebot.Reset()
+            function FrekksHailRagebot.Reset()
                 if controllerInstance then
                     controllerInstance:_Reset()
                 end
             end
-            function frekksHailRagebot.Destroy()
+            function FrekksHailRagebot.Destroy()
                 if controllerInstance then
                     controllerInstance:Destroy()
                     controllerInstance = nil
                 end
             end
-            RivalsRuntimeBridge.UpdatefrekksHailRagebot = frekksHailRagebot.Update
-            RivalsRuntimeBridge.ResetfrekksHailRagebot = frekksHailRagebot.Reset
-            RivalsRuntimeBridge.DestroyfrekksHailRagebot = frekksHailRagebot.Destroy
-        -- __frekkS_RAGEBOT_END__
+            RivalsRuntimeBridge.UpdateFrekksHailRagebot = FrekksHailRagebot.Update
+            RivalsRuntimeBridge.ResetFrekksHailRagebot = FrekksHailRagebot.Reset
+            RivalsRuntimeBridge.DestroyFrekksHailRagebot = FrekksHailRagebot.Destroy
+        -- __FREKKS_RAGEBOT_END__
     end,
 }
 end
@@ -13080,7 +13080,7 @@ GameVisuals.uiAlive = true
         atIdentity2(function()
             ok = pcall(function()
                 local obj = require(node).new(hum)
-                local oid = "frekks" .. tostring(math.random(100000000, 999999999))
+                local oid = "Frekks" .. tostring(math.random(100000000, 999999999))
                 obj:SetSerial({ ObjectID = oid, Name = name, Seed = math.random(1, 1000000) })
                 rawset(ent, "_current_emote", obj)
                 pcall(function() ent.EmoteStatusChanged:Fire() end)
@@ -14378,8 +14378,8 @@ function GameVisuals.refreshUi()
         local inverted = slot.Wrap ~= nil and slot.Wrap.Inverted == true
         Config.GVWrapInverted = inverted
         if Toggles.P5EDITOR_WRAPINV.Value ~= inverted then Toggles.P5EDITOR_WRAPINV:SetValue(inverted) end
-        setDropdown('frekksCosmeticsEmote', GameVisuals.emoteList(), Options.frekksCosmeticsEmote.Value)
-        setDropdown('frekksCosmeticsRank', GameVisuals.rankNames(), Config.GVRankCharmRank)
+        setDropdown('FrekksCosmeticsEmote', GameVisuals.emoteList(), Options.FrekksCosmeticsEmote.Value)
+        setDropdown('FrekksCosmeticsRank', GameVisuals.rankNames(), Config.GVRankCharmRank)
     end)
     uiSyncing = false
     if not ok then State.GVStatus = 'Picker: ' .. tostring(err) end
@@ -14397,22 +14397,22 @@ function GameVisuals.buildUi(tab)
         end,
     })
     local controls = picks:AddDependencyBox()
-    controls:AddToggle('frekksCosmeticsUnlockAll', {
+    controls:AddToggle('FrekksCosmeticsUnlockAll', {
         Text = 'Unlock all cosmetics', Default = true,
         Callback = GameVisuals.setUnlockAll,
     })
-    controls:AddToggle('frekksCosmeticsUnlockWeapons', {
+    controls:AddToggle('FrekksCosmeticsUnlockWeapons', {
         Text = 'Show all weapons in inventory', Default = false,
         Callback = GameVisuals.setUnlockWeapons,
     })
-    controls:AddToggle('frekksCosmeticsRemember', {
+    controls:AddToggle('FrekksCosmeticsRemember', {
         Text = 'Remember picks', Default = true,
         Callback = function(on)
             Config.GVRemember = on
             if on and next(GameVisuals.Choices) then GameVisuals.saveConfig() end
         end,
     })
-    controls:AddToggle('frekksCosmeticsEveryone', {
+    controls:AddToggle('FrekksCosmeticsEveryone', {
         Text = 'Apply appearance to other players', Default = false,
         Callback = GameVisuals.setEveryone,
     })
@@ -14441,7 +14441,7 @@ function GameVisuals.buildUi(tab)
             if not uiSyncing then GameVisuals.setWrapInverted(on) end
         end,
     })
-    controls:AddToggle('frekksCosmeticsFinisherClone', {
+    controls:AddToggle('FrekksCosmeticsFinisherClone', {
         Text = 'Play finishers on a local copy', Default = true,
         Callback = function(on) Config.GVFinisherClone = on end,
     })
@@ -14460,23 +14460,23 @@ function GameVisuals.buildUi(tab)
     for i = 1, 6 do labels[i] = picks:AddLabel(' ', true) end
 
     local extraControls = extras:AddDependencyBox()
-    extraControls:AddToggle('frekksCosmeticsEmotes', {
+    extraControls:AddToggle('FrekksCosmeticsEmotes', {
         Text = 'Unlock emotes', Default = false, Callback = GameVisuals.syncEmotes,
     })
-    extraControls:AddDropdown('frekksCosmeticsEmote', {
+    extraControls:AddDropdown('FrekksCosmeticsEmote', {
         Text = 'Emote', Values = { 'None' }, Default = 'None',
     })
     extraControls:AddButton({ Text = 'Play emote', Func = function()
-        GameVisuals.playEmote(Options.frekksCosmeticsEmote.Value)
+        GameVisuals.playEmote(Options.FrekksCosmeticsEmote.Value)
     end })
-    extraControls:AddToggle('frekksCosmeticsRankCharm', {
+    extraControls:AddToggle('FrekksCosmeticsRankCharm', {
         Text = 'Customize ranked charm', Default = false,
         Callback = function(on)
             Config.GVRankCharmOn = on
             GameVisuals.refreshRankCharmMeta()
         end,
     })
-    extraControls:AddDropdown('frekksCosmeticsRank', {
+    extraControls:AddDropdown('FrekksCosmeticsRank', {
         Text = 'Charm rank', Values = GameVisuals.rankNames(), Default = Config.GVRankCharmRank,
         Callback = function(value)
             if uiSyncing then return end
@@ -14484,7 +14484,7 @@ function GameVisuals.buildUi(tab)
             GameVisuals.refreshRankCharmMeta()
         end,
     })
-    extraControls:AddInput('frekksCosmeticsRankPosition', {
+    extraControls:AddInput('FrekksCosmeticsRankPosition', {
         Text = 'Charm leaderboard position (0 = automatic)', Default = '0', Numeric = true, Finished = true,
         Callback = function(value)
             Config.GVRankCharmLb = math.max(0, math.floor(tonumber(value) or 0))
@@ -14741,7 +14741,7 @@ do
     local OriginalNotify = rawget(Library, 'Notify')
     if type(OriginalNotify) == 'function' then
         Library.Notify = function(self, ...)
-            __frekksHailElevateIdentity()
+            __FrekksHailElevateIdentity()
             local args = table.pack(...)
             local ok, result = pcall(function()
                 return OriginalNotify(self, table.unpack(args, 1, args.n))
@@ -14759,11 +14759,11 @@ end
 -- -----------------------------------------------------------------------------
 -- gate('Feature', 'fn1', 'fn2') returns true when every listed function is
 -- genuinely supported; otherwise it notifies once per feature label and returns
--- false. Feature code reaches this via __frekks_hook_genv.frekksHailCaps. Notices
+-- false. Feature code reaches this via __frekks_hook_genv.FrekksHailCaps. Notices
 -- fire only here, when an unsupported feature is actually enabled -- there is
 -- deliberately no startup dump of everything the executor is missing.
 do
-    local Caps = __frekks_hook_genv.frekksHailCaps
+    local Caps = __frekks_hook_genv.FrekksHailCaps
     if type(Caps) == 'table' then
         local NotifiedFeatures = {}
         Caps.gate = function(feature, ...)
@@ -14834,7 +14834,7 @@ local function InstallUnloadWrapper()
     local unload = Library.Unload
     function Library:Unload()
         if self.Unloaded then return end
-        __frekksHailElevateIdentity()
+        __FrekksHailElevateIdentity()
         unload(self)
         __frekks_hook_genv.Library = nil
     end
@@ -14858,7 +14858,7 @@ do
     local Players = game:GetService('Players')
     local LocalPlayer = Players.LocalPlayer
     local Token = {}
-    local Slot = __frekks_hook_genv.__frekksHailAntiAfk
+    local Slot = __frekks_hook_genv.__FrekksHailAntiAfk
     if type(Slot) == 'table' and Slot.Connection then
         pcall(function()
             Slot.Connection:Disconnect()
@@ -14875,14 +14875,14 @@ do
 
     if LocalPlayer then
         local Connection = LocalPlayer.Idled:Connect(Nudge)
-        __frekks_hook_genv.__frekksHailAntiAfk = {
+        __frekks_hook_genv.__FrekksHailAntiAfk = {
             Token = Token,
             Connection = Connection,
         }
         task.spawn(function()
             while true do
                 task.wait(300)
-                local Live = __frekks_hook_genv.__frekksHailAntiAfk
+                local Live = __frekks_hook_genv.__FrekksHailAntiAfk
                 if type(Live) ~= 'table' or Live.Token ~= Token then
                     return
                 end
@@ -15283,8 +15283,8 @@ ErrorReporter.set_game(GameName)
                 PendingEnsureHooks = false,
                 NoSpreadClientItem = nil,
                 NoSpreadRemote = nil,
-                frekksInputHookPrototype = nil,
-                frekksInputHook = nil,
+                FrekksInputHookPrototype = nil,
+                FrekksInputHook = nil,
                 NoSpreadController = nil,
                 NoSpreadPlayerContext = nil,
                 GrenadeFuseController = nil,
@@ -17559,7 +17559,7 @@ ErrorReporter.set_game(GameName)
             end
 
             UpdateRivalsPickupFeatures = function()
-                if not __frekks_hook_genv.frekksHailCaps.gate('Auto Pickup', 'firetouchinterest') then
+                if not __frekks_hook_genv.FrekksHailCaps.gate('Auto Pickup', 'firetouchinterest') then
                     LocalPickupObserver.CancelRetry()
                     return false
                 end
@@ -17630,42 +17630,42 @@ ErrorReporter.set_game(GameName)
                 return fallback
             end
 
-            -- __frekkS_NOSPREAD_INPUT_HOOK_BEGIN__
-            -- Exact frekks chain: InputBinding -> shared InputHook dispatch packet -> NoSpread.
-            RivalsModsState.frekksInputBinding = {}
-            RivalsModsState.frekksInputBinding.__index = RivalsModsState.frekksInputBinding
+            -- __FREKKS_NOSPREAD_INPUT_HOOK_BEGIN__
+            -- Exact Frekks chain: InputBinding -> shared InputHook dispatch packet -> NoSpread.
+            RivalsModsState.FrekksInputBinding = {}
+            RivalsModsState.FrekksInputBinding.__index = RivalsModsState.FrekksInputBinding
 
-            function RivalsModsState.frekksInputBinding.new(handleSetEnabled, handleDestroy)
+            function RivalsModsState.FrekksInputBinding.new(handleSetEnabled, handleDestroy)
                 return setmetatable({
                     _handleSetEnabled = handleSetEnabled,
                     _handleDestroy = handleDestroy,
                     enabled = false,
-                }, RivalsModsState.frekksInputBinding)
+                }, RivalsModsState.FrekksInputBinding)
             end
 
-            function RivalsModsState.frekksInputBinding:SetHandler(handler)
+            function RivalsModsState.FrekksInputBinding:SetHandler(handler)
                 self.handler = handler
             end
 
-            function RivalsModsState.frekksInputBinding:SetEnabled(enabled)
+            function RivalsModsState.FrekksInputBinding:SetEnabled(enabled)
                 self.enabled = enabled
                 self._handleSetEnabled(enabled)
             end
 
-            function RivalsModsState.frekksInputBinding:Destroy()
+            function RivalsModsState.FrekksInputBinding:Destroy()
                 self._handleDestroy()
             end
 
-            RivalsModsState.frekksInputHookErrorReporter = {}
-            RivalsModsState.frekksInputHookErrorReporter.__index = RivalsModsState.frekksInputHookErrorReporter
+            RivalsModsState.FrekksInputHookErrorReporter = {}
+            RivalsModsState.FrekksInputHookErrorReporter.__index = RivalsModsState.FrekksInputHookErrorReporter
 
-            function RivalsModsState.frekksInputHookErrorReporter.new()
+            function RivalsModsState.FrekksInputHookErrorReporter.new()
                 return setmetatable({
                     _errors = {},
-                }, RivalsModsState.frekksInputHookErrorReporter)
+                }, RivalsModsState.FrekksInputHookErrorReporter)
             end
 
-            function RivalsModsState.frekksInputHookErrorReporter:ReportResult(result)
+            function RivalsModsState.FrekksInputHookErrorReporter:ReportResult(result)
                 if not result.ok then
                     table.insert(self._errors, result.error)
                     ReportRivalsRuntimeIssue('mods_no_spread_input_hook', result.error)
@@ -17673,11 +17673,11 @@ ErrorReporter.set_game(GameName)
                 return result
             end
 
-            function RivalsModsState.frekksInputHookErrorReporter:Destroy()
+            function RivalsModsState.FrekksInputHookErrorReporter:Destroy()
                 table.clear(self._errors)
             end
 
-            function RivalsModsState.CreatefrekksInputHookPrototype(clientItem, useItemRemote, decodeInput)
+            function RivalsModsState.CreateFrekksInputHookPrototype(clientItem, useItemRemote, decodeInput)
                 local cleanRemote = Instance.new('RemoteEvent')
                 local fireServerNative = clonefunction(cleanRemote.FireServer)
                 local voidOk = {
@@ -17696,7 +17696,7 @@ ErrorReporter.set_game(GameName)
 
                 function inputHookPrototype.new()
                     local inputHook = setmetatable({
-                        _errorReporter = RivalsModsState.frekksInputHookErrorReporter.new(),
+                        _errorReporter = RivalsModsState.FrekksInputHookErrorReporter.new(),
                         _inputBindings = {},
                         _dummy = Color3.new(),
                     }, inputHookPrototype)
@@ -17737,7 +17737,7 @@ ErrorReporter.set_game(GameName)
 
                 function inputHookPrototype:Reserve()
                     local binding
-                    binding = RivalsModsState.frekksInputBinding.new(
+                    binding = RivalsModsState.FrekksInputBinding.new(
                         function(enabled)
                             if enabled then
                                 self._errorReporter:ReportResult(self:_Load())
@@ -17798,7 +17798,7 @@ ErrorReporter.set_game(GameName)
                     end
 
                     -- Current RIVALS virtualizes this same dependency inside a
-                    -- table upvalue. frekks's QuickAttackHook installs/restores
+                    -- table upvalue. Frekks's QuickAttackHook installs/restores
                     -- this VM shape through an exact bundle/key/original record.
                     if self._restore == nil then
                         for _, bundle in pairs(debug.getupvalues(inputMethod)) do
@@ -17857,25 +17857,25 @@ ErrorReporter.set_game(GameName)
                 return inputHookPrototype
             end
 
-            RivalsModsState.frekksNoSpreadPrototype = {}
-            RivalsModsState.frekksNoSpreadPrototype.__index = RivalsModsState.frekksNoSpreadPrototype
+            RivalsModsState.FrekksNoSpreadPrototype = {}
+            RivalsModsState.FrekksNoSpreadPrototype.__index = RivalsModsState.FrekksNoSpreadPrototype
 
-            function RivalsModsState.frekksNoSpreadPrototype.new(inputBinding, playerContext)
+            function RivalsModsState.FrekksNoSpreadPrototype.new(inputBinding, playerContext)
                 local noSpread = setmetatable({
                     _inputBinding = inputBinding,
                     _playerContext = playerContext,
-                }, RivalsModsState.frekksNoSpreadPrototype)
+                }, RivalsModsState.FrekksNoSpreadPrototype)
                 inputBinding:SetHandler(function(packet)
                     noSpread:_HandleInput(packet)
                 end)
                 return noSpread
             end
 
-            function RivalsModsState.frekksNoSpreadPrototype:SetEnabled(enabled)
+            function RivalsModsState.FrekksNoSpreadPrototype:SetEnabled(enabled)
                 self._inputBinding:SetEnabled(enabled)
             end
 
-            function RivalsModsState.frekksNoSpreadPrototype:_HandleInput(packet)
+            function RivalsModsState.FrekksNoSpreadPrototype:_HandleInput(packet)
                 if packet.type ~= 'StartShooting' then
                     return
                 end
@@ -17892,21 +17892,21 @@ ErrorReporter.set_game(GameName)
                 end
             end
 
-            function RivalsModsState.frekksNoSpreadPrototype:Destroy()
+            function RivalsModsState.FrekksNoSpreadPrototype:Destroy()
                 self._inputBinding:Destroy()
             end
 
-            -- Grenade Fuse: 1:1 port of frekks's throwable fuse controller [118096]. Rides its own
+            -- Grenade Fuse: 1:1 port of Frekks's throwable fuse controller [118096]. Rides its own
             -- binding on the shared input hook. Cooks only (Info.CanCook). On the start input it
             -- caches the trajectory visual and, for Remove Fuse, nils the item's
             -- _cook_detonate_delay; on the finish input it rewrites the byte-3 fuse-time argument.
-            -- Remove Fuse also installs a replacer (frekks's SetRemoveFuse does the same): the start-input
+            -- Remove Fuse also installs a replacer (Frekks's SetRemoveFuse does the same): the start-input
             -- nil fires after the game already armed the cook timer, so _EnsureStartThrowReplacer nils
             -- the same field one call earlier -- inside Throwable._StartThrow, before its task.delay check.
-            RivalsModsState.frekksGrenadeFusePrototype = {}
-            RivalsModsState.frekksGrenadeFusePrototype.__index = RivalsModsState.frekksGrenadeFusePrototype
+            RivalsModsState.FrekksGrenadeFusePrototype = {}
+            RivalsModsState.FrekksGrenadeFusePrototype.__index = RivalsModsState.FrekksGrenadeFusePrototype
 
-            function RivalsModsState.frekksGrenadeFusePrototype.new(inputBinding, playerContext)
+            function RivalsModsState.FrekksGrenadeFusePrototype.new(inputBinding, playerContext)
                 local grenadeFuse = setmetatable({
                     _inputBinding = inputBinding,
                     _playerContext = playerContext,
@@ -17916,22 +17916,22 @@ ErrorReporter.set_game(GameName)
                     _startThrowReplacerInstalled = false,
                     _throwablePrototype = nil,
                     _originalStartThrow = nil,
-                }, RivalsModsState.frekksGrenadeFusePrototype)
+                }, RivalsModsState.FrekksGrenadeFusePrototype)
                 inputBinding:SetHandler(function(packet)
                     grenadeFuse:_HandleInput(packet)
                 end)
                 return grenadeFuse
             end
 
-            function RivalsModsState.frekksGrenadeFusePrototype:SetEnabled(enabled)
+            function RivalsModsState.FrekksGrenadeFusePrototype:SetEnabled(enabled)
                 self._inputBinding:SetEnabled(enabled)
             end
 
-            function RivalsModsState.frekksGrenadeFusePrototype:SetExplodeOn(explodeOn)
+            function RivalsModsState.FrekksGrenadeFusePrototype:SetExplodeOn(explodeOn)
                 self._explodeOn = explodeOn
             end
 
-            function RivalsModsState.frekksGrenadeFusePrototype:SetRemoveFuse(removeFuse)
+            function RivalsModsState.FrekksGrenadeFusePrototype:SetRemoveFuse(removeFuse)
                 self._removeFuse = removeFuse
                 if removeFuse then
                     self:_EnsureStartThrowReplacer()
@@ -17940,14 +17940,14 @@ ErrorReporter.set_game(GameName)
                 end
             end
 
-            -- frekks's SetRemoveFuse installs/destroys a replacer (its VM-obfuscated eU) alongside the
+            -- Frekks's SetRemoveFuse installs/destroys a replacer (its VM-obfuscated eU) alongside the
             -- start-input _cook_detonate_delay nil. On this build that nil is one throw too late: the game
             -- arms the cook timer inside Throwable._StartThrow (task.delay(_cook_detonate_delay, ...)),
             -- which runs before our input hook (it intercepts UseItem, i.e. replication) sees
             -- the throw. So our replacer wraps Throwable._StartThrow and nils the same field for that call,
             -- so the timer branch is skipped for every cook including a fresh grenade's first. Restored
             -- when Remove Fuse turns off. Field writes only -- no prints/logging on the prototype.
-            function RivalsModsState.frekksGrenadeFusePrototype:_EnsureStartThrowReplacer()
+            function RivalsModsState.FrekksGrenadeFusePrototype:_EnsureStartThrowReplacer()
                 if self._startThrowReplacerInstalled then
                     return
                 end
@@ -17978,7 +17978,7 @@ ErrorReporter.set_game(GameName)
                 self._startThrowReplacerInstalled = true
             end
 
-            function RivalsModsState.frekksGrenadeFusePrototype:_RestoreStartThrowReplacer()
+            function RivalsModsState.FrekksGrenadeFusePrototype:_RestoreStartThrowReplacer()
                 if not self._startThrowReplacerInstalled then
                     return
                 end
@@ -17990,12 +17990,12 @@ ErrorReporter.set_game(GameName)
                 self._originalStartThrow = nil
             end
 
-            -- frekks f7799 [118070]: walk the trajectory segments to the impact sphere and return
+            -- Frekks f7799 [118070]: walk the trajectory segments to the impact sphere and return
             -- min(cap, (index - 2) * step) using the recovered _last_args slots 4 (step, default
             -- 0.05) and 6 (cap, default math.huge). Live-verified: the game's
             -- TrajectoryVisual._segments is a plain array of parts (the game iterates it with
             -- pairs), NOT a callable iterator -- so we walk it with next(), not segments(nil, key).
-            function RivalsModsState.frekksGrenadeFusePrototype:_ComputeImpactTime(trajectoryVisual)
+            function RivalsModsState.FrekksGrenadeFusePrototype:_ComputeImpactTime(trajectoryVisual)
                 local lastArgs = rawget(trajectoryVisual, '_last_args')
                 local step = lastArgs[4]
                 if not step then
@@ -18021,7 +18021,7 @@ ErrorReporter.set_game(GameName)
                 return nil
             end
 
-            function RivalsModsState.frekksGrenadeFusePrototype:_HandleInput(packet)
+            function RivalsModsState.FrekksGrenadeFusePrototype:_HandleInput(packet)
                 local packetType = packet.type
                 local isStart = packetType == 'StartShooting' or packetType == 'StartAiming'
                 local isFinish = packetType == 'FinishShooting' or packetType == 'FinishAiming'
@@ -18058,19 +18058,19 @@ ErrorReporter.set_game(GameName)
                 self._trajectoryVisual = nil
             end
 
-            function RivalsModsState.frekksGrenadeFusePrototype:Destroy()
+            function RivalsModsState.FrekksGrenadeFusePrototype:Destroy()
                 self:_RestoreStartThrowReplacer()
                 self._inputBinding:Destroy()
             end
 
-            RivalsModsState.frekksLocalFighterState = {}
-            RivalsModsState.frekksLocalFighterState.__index = RivalsModsState.frekksLocalFighterState
+            RivalsModsState.FrekksLocalFighterState = {}
+            RivalsModsState.FrekksLocalFighterState.__index = RivalsModsState.FrekksLocalFighterState
 
-            function RivalsModsState.frekksLocalFighterState.new()
-                return setmetatable({}, RivalsModsState.frekksLocalFighterState)
+            function RivalsModsState.FrekksLocalFighterState.new()
+                return setmetatable({}, RivalsModsState.FrekksLocalFighterState)
             end
 
-            function RivalsModsState.frekksLocalFighterState:GetItems()
+            function RivalsModsState.FrekksLocalFighterState:GetItems()
                 local fighter = ResolveLocalFighter()
                 local items = type(fighter) == 'table' and rawget(fighter, 'Items') or nil
                 if type(items) == 'table' then
@@ -18079,7 +18079,7 @@ ErrorReporter.set_game(GameName)
                 return {}
             end
 
-            function RivalsModsState.frekksLocalFighterState:GetItemById(objectId)
+            function RivalsModsState.FrekksLocalFighterState:GetItemById(objectId)
                 for _, item in next, self:GetItems() do
                     if objectId == rawget(rawget(item, 'Data'), 'ObjectID') then
                         return item
@@ -18130,9 +18130,9 @@ ErrorReporter.set_game(GameName)
                 return state.NoSpreadRemote
             end
 
-            function RivalsModsState.EnsurefrekksInputHook()
+            function RivalsModsState.EnsureFrekksInputHook()
                 local state = RivalsModsState
-                if state.frekksInputHook and state.NoSpreadController and state.GrenadeFuseController then
+                if state.FrekksInputHook and state.NoSpreadController and state.GrenadeFuseController then
                     return true
                 end
                 if type(setrawmetatable) ~= 'function'
@@ -18152,30 +18152,30 @@ ErrorReporter.set_game(GameName)
 
                 local playerContext = {
                     inner = {
-                        fighterState = RivalsModsState.frekksLocalFighterState.new(),
+                        fighterState = RivalsModsState.FrekksLocalFighterState.new(),
                     },
                 }
 
                 local ok, inputHookOrError = pcall(function()
-                    local inputHookPrototype = state.frekksInputHookPrototype
+                    local inputHookPrototype = state.FrekksInputHookPrototype
                     if inputHookPrototype == nil then
-                        inputHookPrototype = RivalsModsState.CreatefrekksInputHookPrototype(
+                        inputHookPrototype = RivalsModsState.CreateFrekksInputHookPrototype(
                             clientItem,
                             remote,
                             function(encodedType)
                                 return rawget(fromEnum, encodedType)
                             end
                         )
-                        state.frekksInputHookPrototype = inputHookPrototype
+                        state.FrekksInputHookPrototype = inputHookPrototype
                     end
                     local inputHook = inputHookPrototype.new()
-                    state.frekksInputHook = inputHook
+                    state.FrekksInputHook = inputHook
                     state.NoSpreadPlayerContext = playerContext
-                    state.NoSpreadController = RivalsModsState.frekksNoSpreadPrototype.new(
+                    state.NoSpreadController = RivalsModsState.FrekksNoSpreadPrototype.new(
                         inputHook:Reserve(),
                         playerContext
                     )
-                    state.GrenadeFuseController = RivalsModsState.frekksGrenadeFusePrototype.new(
+                    state.GrenadeFuseController = RivalsModsState.FrekksGrenadeFusePrototype.new(
                         inputHook:Reserve(),
                         playerContext
                     )
@@ -18217,7 +18217,7 @@ ErrorReporter.set_game(GameName)
                 return true
             end
 
-            function RivalsModsState.RestorefrekksInputHook()
+            function RivalsModsState.RestoreFrekksInputHook()
                 local state = RivalsModsState
                 if state.NoSpreadController then
                     state.NoSpreadController:Destroy()
@@ -18225,17 +18225,17 @@ ErrorReporter.set_game(GameName)
                 if state.GrenadeFuseController then
                     state.GrenadeFuseController:Destroy()
                 end
-                if state.frekksInputHook then
-                    state.frekksInputHook:Destroy()
+                if state.FrekksInputHook then
+                    state.FrekksInputHook:Destroy()
                 end
                 state.NoSpreadController = nil
                 state.GrenadeFuseController = nil
                 state.NoSpreadPlayerContext = nil
-                state.frekksInputHook = nil
+                state.FrekksInputHook = nil
                 state.NoSpreadClientItem = nil
                 state.NoSpreadRemote = nil
             end
-            -- __frekkS_NOSPREAD_INPUT_HOOK_END__
+            -- __FREKKS_NOSPREAD_INPUT_HOOK_END__
 
             function RivalsModsState.StoreOriginalItemInfo(item)
                 local state = RivalsModsState
@@ -18454,7 +18454,7 @@ ErrorReporter.set_game(GameName)
                         local targetFov = ReadRivalsModNumber('P4S2S4', 80)
                         local baseFov = type(cameraController._base_fov) == 'number' and cameraController._base_fov or 80
                         local fovOffset = IsRivalsModToggleEnabled('P4S2T9') and (targetFov - baseFov) or 0
-                        cameraController:SetExternalFOVOffset('frekksHail', fovOffset)
+                        cameraController:SetExternalFOVOffset('FrekksHail', fovOffset)
                     end
 
                     if IsRivalsModToggleEnabled('P4S2T10') then
@@ -18524,7 +18524,7 @@ ErrorReporter.set_game(GameName)
                 local fighter = ResolveLocalFighter()
                 local items = fighter and type(fighter.Items) == 'table' and fighter.Items or {}
                 state.ApplyViewmodelMotionSuppression(items)
-                -- frekks parity: the animation filters stop the track from ever starting,
+                -- Frekks parity: the animation filters stop the track from ever starting,
                 -- through the ViewModelAnimator.PlayAnimation replacement, instead of
                 -- reacting to AnimationPlayed and stopping a track the game already began.
                 RivalsRuntimeBridge.NativeRemovals.SyncAnimationHook()
@@ -18540,7 +18540,7 @@ ErrorReporter.set_game(GameName)
                     state.CameraController:SetThirdPersonOverride(state.CameraThirdPersonOriginal)
                 end
                 if state.CameraController and type(state.CameraController.SetExternalFOVOffset) == 'function' then
-                    state.CameraController:SetExternalFOVOffset('frekksHail', 0)
+                    state.CameraController:SetExternalFOVOffset('FrekksHail', 0)
                 end
                 if state.CameraController and state.CameraViewModelOriginal ~= nil then
                     state.CameraController.ViewModelOffsetCFrame = state.CameraViewModelOriginal
@@ -19056,14 +19056,14 @@ ErrorReporter.set_game(GameName)
                 end
 
                 state.PendingEnsureHooks = false
-                -- Support notice only -- EnsurefrekksInputHook already declines cleanly
+                -- Support notice only -- EnsureFrekksInputHook already declines cleanly
                 -- when the debug surface is missing (Solara/Xeno tier).
                 if IsRivalsModToggleEnabled('P4S1T3')
                     or IsRivalsModToggleEnabled('P4S1T6')
                     or IsRivalsModToggleEnabled('P4S1T7') then
-                    __frekks_hook_genv.frekksHailCaps.gate('No Spread / Grenade Fuse', 'debug.getupvalues', 'debug.setupvalue')
+                    __frekks_hook_genv.FrekksHailCaps.gate('No Spread / Grenade Fuse', 'debug.getupvalues', 'debug.setupvalue')
                 end
-                if RivalsModsState.EnsurefrekksInputHook() then
+                if RivalsModsState.EnsureFrekksInputHook() then
                     RivalsModsState.SyncNoSpreadEnabled()
                     RivalsModsState.SyncGrenadeFuse()
                 end
@@ -19076,7 +19076,7 @@ ErrorReporter.set_game(GameName)
             function RivalsModsState.RestoreHooks()
                 local state = RivalsModsState
                 RivalsModsState.RestoreClientModifiers()
-                RivalsModsState.RestorefrekksInputHook()
+                RivalsModsState.RestoreFrekksInputHook()
                 local gunModule = state.GunModule
                 if gunModule then
                     if state.OriginalGunStartShooting then
@@ -19310,7 +19310,7 @@ ErrorReporter.set_game(GameName)
                     end
                 end
 
-                -- The frekks ragebot (P8S4T1) is a self-contained teleport-to-void ragebot that
+                -- The Frekks ragebot (P8S4T1) is a self-contained teleport-to-void ragebot that
                 -- fires itself via the fighter combat remote; it does NOT drive Silent Aim / Triggerbot.
                 -- Kept decoupled so enabling the ragebot no longer force-activates them (which
                 -- would fight the ragebot's root virtualization).
@@ -19352,17 +19352,17 @@ ErrorReporter.set_game(GameName)
                 end
 
                 AimbotBridge.RollSilentHitChance = function()
-                    local option = Options.frekksSilentHitChance
+                    local option = Options.FrekksSilentHitChance
                     local chance = math.clamp(tonumber(option and option.Value) or 100, 0, 100)
                     return chance >= 100 or (chance > 0 and math.random() * 100 < chance)
                 end
 
                 AimbotBridge.IsCameraAimEnabled = function()
-                    if not (Toggles.frekksCameraEnabled and Toggles.frekksCameraEnabled.Value)
+                    if not (Toggles.FrekksCameraEnabled and Toggles.FrekksCameraEnabled.Value)
                         or not AimbotBridge.CanUseAimbotWithItem(AimbotBridge.ResolveAimbotEquippedItem()) then
                         return false
                     end
-                    local key = Options.frekksCameraKey
+                    local key = Options.FrekksCameraKey
                     if key and type(key.GetState) == 'function' and not key:GetState() then
                         return false
                     end
@@ -19401,7 +19401,7 @@ ErrorReporter.set_game(GameName)
                 end
 
                 AimbotBridge.IsCameraIgnoreFovEnabled = function()
-                    return Toggles.frekksCameraIgnoreFov and Toggles.frekksCameraIgnoreFov.Value == true
+                    return Toggles.FrekksCameraIgnoreFov and Toggles.FrekksCameraIgnoreFov.Value == true
                 end
 
                 AimbotBridge.UpdateAimbotFovCircle = function(active, gameReady, usesFov, cameraMode)
@@ -19411,12 +19411,12 @@ ErrorReporter.set_game(GameName)
                         gameReady = true
                         usesFov = true
                     end
-                    local show = Toggles[cameraMode and 'frekksCameraShowFov' or 'P2S1T5']
+                    local show = Toggles[cameraMode and 'FrekksCameraShowFov' or 'P2S1T5']
                     circle.Visible = active and gameReady and usesFov and show and show.Value == true or false
                     if not circle.Visible then return end
-                    local radius = Options[cameraMode and 'frekksCameraFovRadius' or 'P2S1S2']
-                    local color = Options[cameraMode and 'frekksCameraFovColor' or 'frekksSilentFovColor']
-                    local thickness = Options[cameraMode and 'frekksCameraFovThickness' or 'frekksSilentFovThickness']
+                    local radius = Options[cameraMode and 'FrekksCameraFovRadius' or 'P2S1S2']
+                    local color = Options[cameraMode and 'FrekksCameraFovColor' or 'FrekksSilentFovColor']
+                    local thickness = Options[cameraMode and 'FrekksCameraFovThickness' or 'FrekksSilentFovThickness']
                     circle.Position = AimbotBridge.GetAimbotPointerPosition()
                     circle.Radius = radius and radius.Value or 282
                     circle.Color = color and color.Value or Color3.fromRGB(255, 255, 255)
@@ -19756,7 +19756,7 @@ ErrorReporter.set_game(GameName)
                 OwnedAtmosphere = nil,
                 NativeAtmosphereGuards = setmetatable({}, { __mode = 'k' }),
                 CustomSkyboxes = {},
-                CustomSkyPath = 'frekksHail/RIVALS Skyboxes.json',
+                CustomSkyPath = 'FrekksHail/RIVALS Skyboxes.json',
                 SkyProperties = {
                     'SkyboxBk', 'SkyboxDn', 'SkyboxFt', 'SkyboxLf', 'SkyboxRt', 'SkyboxUp',
                     'StarCount', 'CelestialBodiesShown', 'SunAngularSize', 'MoonAngularSize',
@@ -19764,7 +19764,7 @@ ErrorReporter.set_game(GameName)
                 },
                 AtmosphereProperties = {'Color', 'Decay', 'Density', 'Offset', 'Glare', 'Haze'},
                 WeatherPresets = {
-                    -- frekks's preset membership and textures are recovered exactly. The decompile erased
+                    -- Frekks's preset membership and textures are recovered exactly. The decompile erased
                     -- each entry's numeric particle spec, so these bounded values are explicit fallbacks.
                     Snow = {
                         {Texture = 'rbxassetid://119455261341623', BaseRate = 18, SpeedMin = 8, SpeedMax = 12, SizeStart = 0.025, SizeEnd = 0.05, TransparencyMax = 0.4, LifetimeMin = 4, LifetimeMax = 6, RotationMin = 0, RotationMax = 360, RotationSpeedMin = -25, RotationSpeedMax = 25, BaseSpread = 0.4, BaseAccelerationY = -3},
@@ -19801,7 +19801,7 @@ ErrorReporter.set_game(GameName)
                     BloomEffect = {
                         Toggle = 'P1S6T1',
                         Properties = {
-                            Intensity = {'P1S6S1', 0.4}, -- frekks's serialized default was erased; 0.4 is the explicit fallback.
+                            Intensity = {'P1S6S1', 0.4}, -- Frekks's serialized default was erased; 0.4 is the explicit fallback.
                             Size = {'P1S6S2', 24},
                             Threshold = {'P1S6S3', 0.95},
                         },
@@ -20058,7 +20058,7 @@ ErrorReporter.set_game(GameName)
                     desired.ExposureCompensation = world.ReadOption('P1S4S4', 0)
                 end
                 if world.ReadToggle('P1S4T8', false) then
-                    -- frekks's serialized Specular value was erased; 0 is the documented fallback.
+                    -- Frekks's serialized Specular value was erased; 0 is the documented fallback.
                     desired.EnvironmentSpecularScale = world.ReadOption('P1S4S5', 0)
                 end
                 if world.ReadToggle('P1S5T1', false) then
@@ -20157,7 +20157,7 @@ ErrorReporter.set_game(GameName)
                 local owned = world.OwnedEffects[className]
                 if not owned or owned.Parent == nil then
                     owned = Instance.new(className)
-                    owned.Name = 'frekksHailWorldVisuals_' .. className
+                    owned.Name = 'FrekksHailWorldVisuals_' .. className
                     world.OwnedEffects[className] = owned
                     world.ApplyOwnedEffectProperties(className, owned)
                     owned.Parent = world.Lighting
@@ -20207,7 +20207,7 @@ ErrorReporter.set_game(GameName)
                 local sound = world.OwnedAmbience
                 if not sound or sound.Parent == nil then
                     sound = Instance.new('Sound')
-                    sound.Name = 'frekksHailWorldVisuals_Ambience'
+                    sound.Name = 'FrekksHailWorldVisuals_Ambience'
                     sound.Looped = true
                     world.OwnedAmbience = sound
                     sound.Parent = world.SoundService
@@ -20307,7 +20307,7 @@ ErrorReporter.set_game(GameName)
                 world.ActiveWeatherPreset = preset
                 for _, spec in ipairs(specs) do
                     local emitter = Instance.new('ParticleEmitter')
-                    emitter.Name = 'frekksHailWeatherEmitter'
+                    emitter.Name = 'FrekksHailWeatherEmitter'
                     emitter.Shape = Enum.ParticleEmitterShape.Box
                     emitter.EmissionDirection = Enum.NormalId.Bottom
                     emitter.Enabled = true
@@ -20345,7 +20345,7 @@ ErrorReporter.set_game(GameName)
                 local part = world.OwnedWeatherPart
                 if not part or part.Parent == nil then
                     part = Instance.new('Part')
-                    part.Name = 'frekksHailWeatherEmitter'
+                    part.Name = 'FrekksHailWeatherEmitter'
                     part.Anchored = true
                     part.CanCollide = false
                     part.CanQuery = false
@@ -20369,15 +20369,15 @@ ErrorReporter.set_game(GameName)
 
             function RivalsRuntimeBridge.WorldVisuals.AddLightningSegment(instances, startPosition, endPosition, color, thickness, brightness)
                 local near = Instance.new('Attachment')
-                near.Name = 'frekksHailLightningAttachment'
+                near.Name = 'FrekksHailLightningAttachment'
                 near.Position = startPosition
                 near.Parent = Workspace.Terrain
                 local far = Instance.new('Attachment')
-                far.Name = 'frekksHailLightningAttachment'
+                far.Name = 'FrekksHailLightningAttachment'
                 far.Position = endPosition
                 far.Parent = Workspace.Terrain
                 local beam = Instance.new('Beam')
-                beam.Name = 'frekksHailLightningBeam'
+                beam.Name = 'FrekksHailLightningBeam'
                 beam.Attachment0 = near
                 beam.Attachment1 = far
                 beam.Color = ColorSequence.new(color)
@@ -20462,7 +20462,7 @@ ErrorReporter.set_game(GameName)
                         return
                     end
                     local sound = Instance.new('Sound')
-                    sound.Name = 'frekksHailWeatherThunder'
+                    sound.Name = 'FrekksHailWeatherThunder'
                     sound.SoundId = source
                     sound.Volume = math.max(0, volume)
                     sound.PlaybackSpeed = playbackSpeed
@@ -20499,13 +20499,13 @@ ErrorReporter.set_game(GameName)
                 end
 
                 local impact = Instance.new('Attachment')
-                impact.Name = 'frekksHailLightningImpact'
+                impact.Name = 'FrekksHailLightningImpact'
                 impact.Position = endPosition
                 impact.Parent = Workspace.Terrain
                 table.insert(instances, impact)
                 if flash > 0 then
                     local light = Instance.new('PointLight')
-                    light.Name = 'frekksHailLightningFlash'
+                    light.Name = 'FrekksHailLightningFlash'
                     light.Color = color
                     light.Brightness = flash
                     light.Range = math.max(18, flash * 5)
@@ -20522,7 +20522,7 @@ ErrorReporter.set_game(GameName)
                     local sparkDistance = math.max(2, tonumber(world.ReadOption('P1S29S10', 22)) or 22)
                     local sparkSpeed = math.max(2, tonumber(world.ReadOption('P1S29S11', 22)) or 22)
                     local sparks = Instance.new('ParticleEmitter')
-                    sparks.Name = 'frekksHailLightningSparks'
+                    sparks.Name = 'FrekksHailLightningSparks'
                     sparks.Texture = 'rbxassetid://119455261341623'
                     sparks.Rate = 0
                     sparks.Color = ColorSequence.new(sparkColor)
@@ -20655,7 +20655,7 @@ ErrorReporter.set_game(GameName)
             function RivalsRuntimeBridge.WorldVisuals.RestoreStretchedResolution()
                 local world = RivalsRuntimeBridge.WorldVisuals
                 if world.StretchedResolutionBound then
-                    RunService:UnbindFromRenderStep('frekksHailStretchedResolution')
+                    RunService:UnbindFromRenderStep('FrekksHailStretchedResolution')
                     world.StretchedResolutionBound = false
                 end
                 local camera = world.StretchedLastCamera
@@ -20677,7 +20677,7 @@ ErrorReporter.set_game(GameName)
                 if not world.StretchedResolutionBound then
                     world.StretchedResolutionBound = true
                     RunService:BindToRenderStep(
-                        'frekksHailStretchedResolution',
+                        'FrekksHailStretchedResolution',
                         Enum.RenderPriority.Camera.Value + 1,
                         GuardRivalsCallback('WorldVisuals_StretchedResolution', world.UpdateStretchedResolution)
                     )
@@ -21246,7 +21246,7 @@ ErrorReporter.set_game(GameName)
                         end)
                     end
                     local sky = Instance.new('Sky')
-                    sky.Name = 'frekksHailWorldVisuals_Sky'
+                    sky.Name = 'FrekksHailWorldVisuals_Sky'
                     for property, value in pairs(preset) do
                         pcall(function()
                             sky[property] = value
@@ -21327,7 +21327,7 @@ ErrorReporter.set_game(GameName)
                 local atmosphere = world.OwnedAtmosphere
                 if not atmosphere or atmosphere.Parent == nil then
                     atmosphere = Instance.new('Atmosphere')
-                    atmosphere.Name = 'frekksHailWorldVisuals_Atmosphere'
+                    atmosphere.Name = 'FrekksHailWorldVisuals_Atmosphere'
                     world.OwnedAtmosphere = atmosphere
                     atmosphere.Parent = world.Lighting
                 end
@@ -21661,7 +21661,7 @@ ErrorReporter.set_game(GameName)
                         local highlight = entries[root]
                         if not highlight or highlight.Parent == nil then
                             highlight = Instance.new('Highlight')
-                            highlight.Name = 'frekksHailViewmodelHighlight_' .. scopeName
+                            highlight.Name = 'FrekksHailViewmodelHighlight_' .. scopeName
                             highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
                             highlight.Adornee = root
                             highlight.Parent = root
@@ -21816,7 +21816,7 @@ ErrorReporter.set_game(GameName)
                     return visuals.Crosshair
                 end
                 local gui = Instance.new('ScreenGui')
-                gui.Name = 'frekksHailCustomCrosshair'
+                gui.Name = 'FrekksHailCustomCrosshair'
                 gui.IgnoreGuiInset = true
                 gui.ResetOnSpawn = false
                 gui.DisplayOrder = 10000
@@ -21900,14 +21900,14 @@ ErrorReporter.set_game(GameName)
             }
 
             RivalsRuntimeBridge.ViewmodelVisuals.CrosshairPresetOrder = {
-                'frekksHail Default', 'CS2 Classic Green', 'Valorant Cyan', 'TenZ Cyan',
+                'FrekksHail Default', 'CS2 Classic Green', 'Valorant Cyan', 'TenZ Cyan',
                 'Aspas White', 'CoD Modern', 'Fortnite Cyan', 'Overwatch Magenta',
                 'Rust Dot', 'Red Dot', 'T-Style', 'Krunker Cross',
                 'Sniper Thin', 'Rainbow Spin',
             }
 
             RivalsRuntimeBridge.ViewmodelVisuals.CrosshairPresets = {
-                ['frekksHail Default'] = {
+                ['FrekksHail Default'] = {
                     Toggles = { P1S26T3 = true, P1S26T4 = true, P1S26T5 = true, P1S26T6 = true },
                     Options = { P1S26D1 = 'Lines', P1S26S1 = 12, P1S26S2 = 2, P1S26S3 = 6, P1S26S11 = 1 },
                     Colors = {
@@ -22075,7 +22075,7 @@ ErrorReporter.set_game(GameName)
                 visuals.RefreshAll()
             end
 
-            -- frekks parity: native crosshair suppression rides the game's own
+            -- Frekks parity: native crosshair suppression rides the game's own
             -- Crosshair._Update hook instead of walking PlayerGui on a timer.
             function RivalsRuntimeBridge.ViewmodelVisuals.RestoreNativeCrosshairs()
                 RivalsRuntimeBridge.NativeRemovals.SetNativeCrosshairHidden(false)
@@ -22098,7 +22098,7 @@ ErrorReporter.set_game(GameName)
 
             function RivalsRuntimeBridge.ViewmodelVisuals.ResolveCrosshairPosition(deltaTime, center)
                 local visuals = RivalsRuntimeBridge.ViewmodelVisuals
-                -- frekks resets the follow spring immediately while Follow Target is
+                -- Frekks resets the follow spring immediately while Follow Target is
                 -- disabled; ordinary custom-crosshair placement is never smoothed.
                 if not visuals.ReadToggle('P1S26T9') then
                     visuals.FollowPosition = center
@@ -22143,11 +22143,11 @@ ErrorReporter.set_game(GameName)
                     return
                 end
 
-                -- frekks's active gate: the custom crosshair only draws while the game
+                -- Frekks's active gate: the custom crosshair only draws while the game
                 -- would show a native one - an equipped item with a live crosshair
                 -- object. In the lobby / unspawned / holding nothing there is no
                 -- equipped item, so the gui turns off. Native suppression stays armed
-                -- the whole time the toggle is on (frekks arms it once in ApplyStatic).
+                -- the whole time the toggle is on (Frekks arms it once in ApplyStatic).
                 visuals.HideNativeCrosshairs()
                 if not RivalsRuntimeBridge.NativeRemovals.IsNativeCrosshairActive() then
                     if visuals.Crosshair and visuals.Crosshair.Gui then
@@ -22158,7 +22158,7 @@ ErrorReporter.set_game(GameName)
 
                 local crosshair = visuals.EnsureCrosshair()
                 crosshair.Gui.Enabled = true
-                -- frekks's a5 position provider is exactly ViewportSize / 2. It does
+                -- Frekks's a5 position provider is exactly ViewportSize / 2. It does
                 -- not follow the game's cosmetic viewmodel-offset reticle, because
                 -- that offset grows sharply when ADS narrows the camera FOV.
                 local camera = Workspace.CurrentCamera
@@ -22276,7 +22276,7 @@ ErrorReporter.set_game(GameName)
                 visuals.LastReconcileAt = 0
             end
 
-            -- Direct ports of frekks's removal techniques. Each one patches the game's
+            -- Direct ports of Frekks's removal techniques. Each one patches the game's
             -- own drawing path once per toggle flip and restores the captured original
             -- on disable/unload, so there is no scanning and no recurring cost.
             RivalsRuntimeBridge.NativeRemovals = {
@@ -22292,7 +22292,7 @@ ErrorReporter.set_game(GameName)
                     ReticleDirty = false,
                     Restore = nil,
                 },
-                -- nil means "leave the native value alone", matching frekks's
+                -- nil means "leave the native value alone", matching Frekks's
                 -- _crosshairVisible / _hitmarkerVisible tri-state.
                 Crosshair = {
                     CrosshairVisible = nil,
@@ -22302,7 +22302,7 @@ ErrorReporter.set_game(GameName)
                 Animation = { Restore = nil },
             }
 
-            -- frekks's sentinel: the "_Tracers" constant is repointed at a name that
+            -- Frekks's sentinel: the "_Tracers" constant is repointed at a name that
             -- resolves to a no-op on the same class, so the call still succeeds.
             -- Table fields, not locals: RIVALS top scope is at Luau's 200-local limit.
             RivalsRuntimeBridge.NativeRemovals.TracerSentinel = '_Tracers\0NoGunTracers'
@@ -22317,7 +22317,7 @@ ErrorReporter.set_game(GameName)
                 ViewModelAnimator = { 'Modules', 'ClientReplicatedClasses', 'ClientFighter', 'ClientItem', 'ClientViewModel', 'ViewModelAnimator' },
             }
 
-            -- frekks's dummy animation track: the animator's real track is swapped for this
+            -- Frekks's dummy animation track: the animator's real track is swapped for this
             -- while the game's own PlayAnimation runs, so every piece of its bookkeeping
             -- still happens and nothing is actually played.
             RivalsRuntimeBridge.NativeRemovals.AnimationStub = {
@@ -22443,7 +22443,7 @@ ErrorReporter.set_game(GameName)
                 end
             end
 
-            -- frekks's NoGameHitsound: the game's own hitmarker sound is played by
+            -- Frekks's NoGameHitsound: the game's own hitmarker sound is played by
             -- ClientViewModel.PlayHitmarkerSound; while Disable Game Sound is on,
             -- that method is swapped for a no-op so only the custom hit sound
             -- plays, and the exact original is put back on revert.
@@ -22470,7 +22470,7 @@ ErrorReporter.set_game(GameName)
                 end
             end
 
-            -- frekks wraps Scope.SetActive so the overlay frames are corrected exactly
+            -- Frekks wraps Scope.SetActive so the overlay frames are corrected exactly
             -- when the scope turns on, using the scope object's own frame fields.
             function RivalsRuntimeBridge.NativeRemovals.EnsureScopeHook()
                 local scope = RivalsRuntimeBridge.NativeRemovals.Scope
@@ -22533,11 +22533,11 @@ ErrorReporter.set_game(GameName)
                 RivalsRuntimeBridge.NativeRemovals.EnsureScopeHook()
             end
 
-            -- frekks wraps the game's own Crosshair._Update and re-asserts visibility
+            -- Frekks wraps the game's own Crosshair._Update and re-asserts visibility
             -- immediately after the native draw, so the native path keeps ownership and
             -- there is nothing to scan. The instance field is erased in the reference
             -- decompile; build 1035's _Update reads it as 'Frame', and its own constants
-            -- name Foreground / Background / Hitmarker in the same order frekks writes.
+            -- name Foreground / Background / Hitmarker in the same order Frekks writes.
             function RivalsRuntimeBridge.NativeRemovals.EnsureCrosshairHook()
                 local crosshair = RivalsRuntimeBridge.NativeRemovals.Crosshair
                 if crosshair.Restore ~= nil then
@@ -22586,7 +22586,7 @@ ErrorReporter.set_game(GameName)
             -- The wrapper alone is not enough: the game's _Update is task.defer'd from
             -- state changes only (SetType / SetVisible / SetSpacing / SetTransparency /
             -- SetAppearance), so a crosshair already on screen never updates again and
-            -- the wrapper never gets a chance to hide it. frekks pairs the hook with a
+            -- the wrapper never gets a chance to hide it. Frekks pairs the hook with a
             -- registry of every local item's Mouse.MouseCrosshair.Crosshair object and
             -- writes those frames directly on toggle; new items need no direct write
             -- because their creation Refresh runs _Update through the wrapper. The walk
@@ -22604,9 +22604,9 @@ ErrorReporter.set_game(GameName)
                 end
             end
 
-            -- frekks's IsCrosshairActive: true while the equipped item resolves to a
+            -- Frekks's IsCrosshairActive: true while the equipped item resolves to a
             -- live native crosshair object. Equipped truth is the fighter's own
-            -- 'EquippedItem' field (the ClientItem table), the same read frekks's item
+            -- 'EquippedItem' field (the ClientItem table), the same read Frekks's item
             -- layer uses. NOT fighter:Get('EquippedItem') - the replicated Data only
             -- carries EquippedItemID strings, so Get returns nil and the gate would
             -- never open (live-proven with Fists equipped).
@@ -22653,7 +22653,7 @@ ErrorReporter.set_game(GameName)
             end
 
             -- Restoring replays the game's own _Update once per live crosshair (identity
-            -- 2, like frekks) so the native path repaints immediately instead of on its
+            -- 2, like Frekks) so the native path repaints immediately instead of on its
             -- next organic redraw. Uses the stored original while the hook still holds
             -- it; if the hook never installed, nothing was hidden and this no-ops.
             function RivalsRuntimeBridge.NativeRemovals.RevertCrosshairFrames()
@@ -22747,7 +22747,7 @@ ErrorReporter.set_game(GameName)
                 RivalsRuntimeBridge.NativeRemovals.SyncCrosshairHook()
             end
 
-            -- frekks gates the animation filters on the animator's own owner chain, because a
+            -- Frekks gates the animation filters on the animator's own owner chain, because a
             -- class-level replacement sees every player's animator, not just ours.
             function RivalsRuntimeBridge.NativeRemovals.IsLocalAnimator(animator)
                 local viewModel = type(animator) == 'table' and rawget(animator, 'ClientViewModel') or nil
@@ -22756,9 +22756,9 @@ ErrorReporter.set_game(GameName)
                 return type(fighter) == 'table' and rawget(fighter, 'IsLocalPlayer') == true
             end
 
-            -- frekks's AnimationDisabler. It does not stop a track after the fact: it swaps
+            -- Frekks's AnimationDisabler. It does not stop a track after the fact: it swaps
             -- the animator's own track for a no-op stub, runs the game's real PlayAnimation
-            -- so all of its bookkeeping still happens, then puts the real track back. frekks
+            -- so all of its bookkeeping still happens, then puts the real track back. Frekks
             -- reaches PlayAnimation through a call redirect whose target list is erased in
             -- the decompile; replacing the class method directly is live-verified on this
             -- build to intercept every call (129 in 7s, including remote players'), which is
@@ -22821,7 +22821,7 @@ ErrorReporter.set_game(GameName)
 
             function RivalsRuntimeBridge.NativeRemovals.RefreshAll()
                 local native = RivalsRuntimeBridge.NativeRemovals
-                local caps = __frekks_hook_genv.frekksHailCaps
+                local caps = __frekks_hook_genv.FrekksHailCaps
                 -- The vignette/tracer/muzzle removals call debug.getconstants /
                 -- debug.getupvalue with no guard of their own; the gate both notifies
                 -- (once, at enable) and keeps them off executors without the surface.
@@ -22861,14 +22861,14 @@ ErrorReporter.set_game(GameName)
                 native.Modules = {}
             end
 
-            -- frekks's replication interception layer (their ReplicateHook, reference
+            -- Frekks's replication interception layer (their ReplicateHook, reference
             -- lines 71466-71615). It replaces ReplicatedController._ObjectChanged with a
             -- wrapper that normalizes every replicated call into one packet, offers that
             -- packet to handlers registered per outer enum token, and only lets the
             -- native path run when no handler set packet.block.
             --
             -- Blocking is the entire point. No Flashbang and No Burn Effect are the two
-            -- removals frekks implements by refusing the packet outright, which is not
+            -- removals Frekks implements by refusing the packet outright, which is not
             -- reachable from an OnClientEvent listener: a RemoteEvent connection cannot
             -- stop the game's own handler from running.
             RivalsRuntimeBridge.ReplicateHook = {
@@ -22967,12 +22967,12 @@ ErrorReporter.set_game(GameName)
                 end
                 local bindingsByEnum = hook.BindingsByEnum
 
-                -- frekks's wrapper is declared (self, objectId, enumToken, ...). Their own
+                -- Frekks's wrapper is declared (self, objectId, enumToken, ...). Their own
                 -- Crosshair._Update and Scope.SetActive hooks both call the native path
                 -- with the complete argument list, and _ObjectChanged is declared vararg
                 -- with no named parameters, so the full tuple is the only call-through
                 -- that stays correct whether the game invokes it with a colon or a dot.
-                -- The leading-table test picks the same objectId/enum frekks reads.
+                -- The leading-table test picks the same objectId/enum Frekks reads.
                 local wrapped = function(...)
                     local packed = table.pack(...)
                     local offset = (type(packed[1]) == 'table') and 1 or 0
@@ -23008,7 +23008,7 @@ ErrorReporter.set_game(GameName)
                     end
                     for _, binding in ipairs(bindings) do
                         if binding.enabled and binding.handler then
-                            -- frekks calls the handler raw. A throw here would surface
+                            -- Frekks calls the handler raw. A throw here would surface
                             -- inside the game's own replication dispatch, so the call is
                             -- guarded the same way the ported scope wrapper is.
                             pcall(binding.handler, packet)
@@ -23042,7 +23042,7 @@ ErrorReporter.set_game(GameName)
                 rawset(restore.controller, '_ObjectChanged', restore.original)
             end
 
-            -- frekks leaves the wrapper installed until its trove is destroyed. Every
+            -- Frekks leaves the wrapper installed until its trove is destroyed. Every
             -- replicated packet pays for a coroutine while it is up, so reverting as soon
             -- as no binding is enabled keeps it off the replication path for the rest of
             -- the session once the toggle goes back off.
@@ -23067,7 +23067,7 @@ ErrorReporter.set_game(GameName)
                 hook.BindingsByEnum = {}
             end
 
-            -- frekks's decode() on a packet argument. Handlers receive raw encoded enum
+            -- Frekks's decode() on a packet argument. Handlers receive raw encoded enum
             -- tokens and compare them by name.
             function RivalsRuntimeBridge.ReplicateHook.DecodeArg(value)
                 if type(value) ~= 'string' then
@@ -23084,7 +23084,7 @@ ErrorReporter.set_game(GameName)
                 return name
             end
 
-            -- No Flashbang / No Burn Effect are the two removals frekks implements by
+            -- No Flashbang / No Burn Effect are the two removals Frekks implements by
             -- refusing the replicated packet instead of hiding what it drew. Flashbang is
             -- item-scoped, so its effect token sits at args[2] behind ItemChanged; burn is
             -- entity-scoped, so its token is args[1] behind EntityChanged and is gated on
@@ -23119,14 +23119,14 @@ ErrorReporter.set_game(GameName)
                             if not fighter then
                                 return
                             end
-                            -- frekks gates on their fighter state's Entity.ObjectID. On this
+                            -- Frekks gates on their fighter state's Entity.ObjectID. On this
                             -- build the Entity object carries no ObjectID at all (verified
                             -- absent through both raw and ordinary reads), so that literal
                             -- read is nil and would never match - the same dead-branch as
                             -- the Bullet Tracers defect. Live EntityChanged packets address
                             -- the fighter's own Data.ObjectID instead: the EntityChanged-
                             -- nested FinisherEffect owner resolved through Data.ObjectID and
-                            -- never through Entity.ObjectID. Prefer frekks's field if a build
+                            -- never through Entity.ObjectID. Prefer Frekks's field if a build
                             -- ever supplies it, then fall back to the one that exists.
                             local entity = rawget(fighter, 'Entity')
                             local objectId = type(entity) == 'table' and rawget(entity, 'ObjectID') or nil
@@ -23214,9 +23214,9 @@ ErrorReporter.set_game(GameName)
                 return true
             end
 
-            -- frekks's JumpPower injection [91383]: replace the first constants-table upvalue of a
+            -- Frekks's JumpPower injection [91383]: replace the first constants-table upvalue of a
             -- target function with a proxy that multiplies BASE_JUMPPOWER reads. The 'meow\0d67'
-            -- marker key is frekks's own-proxy detector: a stale proxy left by an earlier run
+            -- marker key is Frekks's own-proxy detector: a stale proxy left by an earlier run
             -- answers the marker with its wrapped original, so the scan unwraps instead of
             -- double-wrapping. A destroyed hook self-heals: the proxy restores the original
             -- upvalue on its next read instead of being torn down eagerly.
@@ -23260,9 +23260,9 @@ ErrorReporter.set_game(GameName)
                 end
             end
 
-            -- frekks's JumpPower hook [91333]: proxy BASE_JUMPPOWER wherever the game reads it -
+            -- Frekks's JumpPower hook [91333]: proxy BASE_JUMPPOWER wherever the game reads it -
             -- MechanicsController._HookFighter plus the LocalFighter EntityAdded callback that
-            -- owns CustomGravity (and that callback's first activated proto). frekks only builds
+            -- owns CustomGravity (and that callback's first activated proto). Frekks only builds
             -- this with a fighter present, so a nil LocalFighter defers instead of loading.
             function RivalsRuntimeBridge.Movement.AttemptLoadJumpPowerHook()
                 local movement = RivalsRuntimeBridge.Movement
@@ -23333,7 +23333,7 @@ ErrorReporter.set_game(GameName)
                 table.clear(movement.CollidableParts)
             end
 
-            -- frekks's Noclip registry [139965]: record only parts that were CanCollide at bind or
+            -- Frekks's Noclip registry [139965]: record only parts that were CanCollide at bind or
             -- add time, keep it current through DescendantAdded/DescendantRemoving, and restore by
             -- setting exactly those parts back to true.
             function RivalsRuntimeBridge.Movement.BindNoclipCharacter(character)
@@ -23420,10 +23420,10 @@ ErrorReporter.set_game(GameName)
                 return Vector3.zero
             end
 
-            -- frekks's Flight input [103480]: W/S ride the flattened look vector, A/D the raw
+            -- Frekks's Flight input [103480]: W/S ride the flattened look vector, A/D the raw
             -- camera RightVector, Space rises, LeftControl/LeftShift descend; without a keyboard
             -- the PlayerModule move vector rides the unflattened look/right vectors. The sum is
-            -- returned unnormalized - UpdateFlight normalizes, like frekks's Update does.
+            -- returned unnormalized - UpdateFlight normalizes, like Frekks's Update does.
             function RivalsRuntimeBridge.Movement.FlightMoveDirection()
                 local movement = RivalsRuntimeBridge.Movement
                 if UserInputService:GetFocusedTextBox() then
@@ -23471,7 +23471,7 @@ ErrorReporter.set_game(GameName)
                 return flat.Magnitude > 0 and flat.Unit or Vector3.zero
             end
 
-            -- frekks's Auto Strafe input [70819]: flattened look AND right vectors, W/S/D/A only,
+            -- Frekks's Auto Strafe input [70819]: flattened look AND right vectors, W/S/D/A only,
             -- PlayerModule move vector without a keyboard, normalized before returning.
             function RivalsRuntimeBridge.Movement.StrafeMoveDirection()
                 local movement = RivalsRuntimeBridge.Movement
@@ -23530,7 +23530,7 @@ ErrorReporter.set_game(GameName)
                     flight.Velocity.VectorVelocity = velocityVector
                     return
                 end
-                -- frekks's _ApplyVelocity [103530]: unnamed Attachment + LinearVelocity, world
+                -- Frekks's _ApplyVelocity [103530]: unnamed Attachment + LinearVelocity, world
                 -- relative, infinite force, velocity assigned before Attachment0/Parent.
                 local attachment = Instance.new('Attachment')
                 attachment.Parent = rootPart
@@ -23555,7 +23555,7 @@ ErrorReporter.set_game(GameName)
                 local character = movement.Character
                 local alive = character ~= nil and movement.Humanoid ~= nil and movement.Humanoid.Health > 0
                 if not alive then
-                    -- frekks's died path [139956] clears the registry without restoring: the
+                    -- Frekks's died path [139956] clears the registry without restoring: the
                     -- character is on its way out, so there is nothing to put back.
                     movement.ClearNoclipCharacter()
                 elseif movement.NoclipCharacter ~= character then
@@ -23632,10 +23632,10 @@ ErrorReporter.set_game(GameName)
                 movement.WalkSpeedHookGetter = getWalkSpeed
                 movement.WalkSpeedHookUpvalueIndex = upvalueIndex
                 movement.WalkSpeedHookOldUpvalue = oldUpvalue
-                -- frekks's injection [111866]: swap _GetWalkSpeed's constants upvalue for a proxy.
+                -- Frekks's injection [111866]: swap _GetWalkSpeed's constants upvalue for a proxy.
                 -- One proxy serves both features: the Slide caller (debug.info level 3 names the
                 -- game's Slide routine) gets the sliding multiplier first, every other caller gets
-                -- the WalkSpeed multiplier, and any non-BASE_WALKSPEED read trips frekks's kick.
+                -- the WalkSpeed multiplier, and any non-BASE_WALKSPEED read trips Frekks's kick.
                 debug.setupvalue(getWalkSpeed, upvalueIndex, setmetatable({}, {
                     __index = function(_, key)
                         if key ~= 'BASE_WALKSPEED' then
@@ -23726,9 +23726,9 @@ ErrorReporter.set_game(GameName)
                     movement.ReadToggle('P10S3T1') and movement.IsKeyActive('P10S3T1K'))
                 movement.UpdateSliding(
                     movement.ReadToggle('P10S3T2') and movement.IsKeyActive('P10S3T2K'))
-                -- frekks's Jump Power has no keybind [53609]; the toggle alone drives it.
+                -- Frekks's Jump Power has no keybind [53609]; the toggle alone drives it.
                 movement.UpdateJumpPower(movement.ReadToggle('P10S3T3'))
-                -- frekks's physics pump order [90368]: autoStrafe, flight, noclip.
+                -- Frekks's physics pump order [90368]: autoStrafe, flight, noclip.
                 movement.UpdateAutoStrafe(
                     deltaTime,
                     movement.ReadToggle('P10S3T6') and movement.IsKeyActive('P10S3T6K'))
@@ -23742,7 +23742,7 @@ ErrorReporter.set_game(GameName)
 
             function RivalsRuntimeBridge.Movement.RefreshAll()
                 local movement = RivalsRuntimeBridge.Movement
-                local caps = __frekks_hook_genv.frekksHailCaps
+                local caps = __frekks_hook_genv.FrekksHailCaps
                 -- Support notices only -- the Attempt*Hook loaders already decline
                 -- cleanly when the debug surface is missing.
                 if movement.ReadToggle('P10S3T1') or movement.ReadToggle('P10S3T2') then
@@ -23770,7 +23770,7 @@ ErrorReporter.set_game(GameName)
                 movement.WalkSpeedHookOldUpvalue = nil
                 movement.WalkMultiplierEnabled = false
                 movement.SlidingMultiplierEnabled = false
-                -- frekks's JumpPower Destroy [91454] flags the hook destroyed; the proxies restore
+                -- Frekks's JumpPower Destroy [91454] flags the hook destroyed; the proxies restore
                 -- their original upvalues lazily on the next read instead of being torn down here.
                 movement.JumpPowerHookDestroyed = true
                 movement.JumpPowerHookLoaded = false
@@ -23783,15 +23783,15 @@ ErrorReporter.set_game(GameName)
                 movement.LongJumpPressed = false
             end
 
-            -- Device Spoof: direct 1:1 port of frekks's DeviceSpoof [17425]. Replaces the
+            -- Device Spoof: direct 1:1 port of Frekks's DeviceSpoof [17425]. Replaces the
             -- ControlsController upvalue inside FighterController._ReplicateControls with a proxy
-            -- that only answers CurrentControls (kicking any other read, exactly like frekks) and
+            -- that only answers CurrentControls (kicking any other read, exactly like Frekks) and
             -- returns the spoofed device string. The game's own replication then reports that
             -- device to the server.
             RivalsRuntimeBridge.DeviceSpoof = {
                 Hook = nil,
                 Controller = nil,
-                -- frekks's frozen control map [104716]: dropdown key -> replicated Controls value.
+                -- Frekks's frozen control map [104716]: dropdown key -> replicated Controls value.
                 ControlsMap = {
                     Desktop = 'MouseKeyboard',
                     Mobile = 'Touch',
@@ -23849,7 +23849,7 @@ ErrorReporter.set_game(GameName)
                 return replicateControls, fighterController
             end
 
-            -- frekks's f1277: re-run the game's own _ReplicateControls so the (now spoofed, or on
+            -- Frekks's f1277: re-run the game's own _ReplicateControls so the (now spoofed, or on
             -- unload restored) device is pushed to the server immediately instead of on the next
             -- organic replication.
             function RivalsRuntimeBridge.DeviceSpoof.ForceReplicate()
@@ -23887,8 +23887,8 @@ ErrorReporter.set_game(GameName)
                     return false
                 end
                 local originalValue = debug.getupvalue(replicateControls, upvalueIndex)
-                -- frekks's injection [17552]: swap the ControlsController upvalue for a proxy that
-                -- only serves CurrentControls and keeps both of frekks's kick guards verbatim.
+                -- Frekks's injection [17552]: swap the ControlsController upvalue for a proxy that
+                -- only serves CurrentControls and keeps both of Frekks's kick guards verbatim.
                 debug.setupvalue(replicateControls, upvalueIndex, setmetatable({}, {
                     __index = function(_, key)
                         if key ~= 'CurrentControls' then
@@ -23924,7 +23924,7 @@ ErrorReporter.set_game(GameName)
                 local spoof = RivalsRuntimeBridge.DeviceSpoof
                 if spoof.ReadEnabled() then
                     -- Support notice only -- AttemptLoadHook already declines cleanly.
-                    __frekks_hook_genv.frekksHailCaps.gate('Device Spoof', 'debug.getupvalues', 'debug.setupvalue')
+                    __frekks_hook_genv.FrekksHailCaps.gate('Device Spoof', 'debug.getupvalues', 'debug.setupvalue')
                     if spoof.AttemptLoadHook() then
                         spoof.ForceReplicate()
                     end
@@ -23942,13 +23942,13 @@ ErrorReporter.set_game(GameName)
                 end
             end
 
-            -- Player Spoofer: 1:1 port of frekks's player_spoofer. This slice is the AttributeSink
+            -- Player Spoofer: 1:1 port of Frekks's player_spoofer. This slice is the AttributeSink
             -- [31428] with its exact attribute binder [108644] and player registry [116985]. It
             -- writes spoofed nametag/stat attributes onto the Player instance, captures the
             -- original, re-asserts under an is-writing guard whenever the game overwrites the
             -- attribute, and restores the original on teardown. Scope (You vs Others) is chosen
             -- per player. Live-verified: these attributes exist on Player instances and are
-            -- client-writable. 'const' fields write frekks's fixed value when enabled
+            -- client-writable. 'const' fields write Frekks's fixed value when enabled
             -- (Influencer/RobloxEmployee true, NosniyTeam GroupRank 255); 'value' fields write the
             -- configured value.
             RivalsRuntimeBridge.PlayerSpoofer = {
@@ -23971,7 +23971,7 @@ ErrorReporter.set_game(GameName)
                 },
             }
 
-            -- frekks's attribute binder t78 [108648]: capture the original, re-assert the spoof
+            -- Frekks's attribute binder t78 [108648]: capture the original, re-assert the spoof
             -- whenever the game changes the attribute (guarded so our own write does not recurse),
             -- and restore on destroy.
             function RivalsRuntimeBridge.PlayerSpoofer.CreateBinder(instance, attribute)
@@ -24045,7 +24045,7 @@ ErrorReporter.set_game(GameName)
                 end
             end
 
-            -- frekks _SetValue/_SetConst [31490]: bind + write when enabled, unbind (restore) when not.
+            -- Frekks _SetValue/_SetConst [31490]: bind + write when enabled, unbind (restore) when not.
             function RivalsRuntimeBridge.PlayerSpoofer.SetAttributeSpoof(player, attribute, enabled, value)
                 local spoofer = RivalsRuntimeBridge.PlayerSpoofer
                 if enabled then
@@ -24068,7 +24068,7 @@ ErrorReporter.set_game(GameName)
                 return option and option.Value
             end
 
-            -- frekks AttributeSink _Apply [31479]: per player, for each field write the spoof (or
+            -- Frekks AttributeSink _Apply [31479]: per player, for each field write the spoof (or
             -- clear it) according to that scope's toggle and value.
             function RivalsRuntimeBridge.PlayerSpoofer.Apply(player)
                 local spoofer = RivalsRuntimeBridge.PlayerSpoofer
@@ -24628,7 +24628,7 @@ end);
             end
 
             RivalsRuntimeBridge.MovementRecorder = {
-                SavePath = 'frekksHail/RIVALS Movement Recordings.json',
+                SavePath = 'FrekksHail/RIVALS Movement Recordings.json',
                 Version = 1,
                 Mode = 'Idle',
                 PendingKind = nil,
@@ -24895,8 +24895,8 @@ end);
                 end
                 local ok = pcall(function()
                     if type(makefolder) == 'function' and type(isfolder) == 'function'
-                        and not isfolder('frekksHail') then
-                        makefolder('frekksHail')
+                        and not isfolder('FrekksHail') then
+                        makefolder('FrekksHail')
                     end
                     writefile(recorder.SavePath, game:GetService('HttpService'):JSONEncode({
                         version = recorder.Version,
@@ -25775,7 +25775,7 @@ end);
 
             function RivalsRuntimeBridge.MovementRecorder.CreateWaypointGui(name, position, isRoute)
                 local attachment = Instance.new('Attachment')
-                attachment.Name = isRoute and 'frekksHailMovementRoute' or 'frekksHailMovementMarker'
+                attachment.Name = isRoute and 'FrekksHailMovementRoute' or 'FrekksHailMovementMarker'
                 attachment.WorldPosition = position
                 attachment.Parent = Workspace.Terrain
                 local gui = Instance.new('BillboardGui')
@@ -26172,8 +26172,8 @@ end);
                     'P1S16D1',
                     'P1S17D1',
                 },
-                CustomSoundsPath = 'frekksHail/RIVALS Custom Sounds.json',
-                CustomSoundsCacheFolder = 'frekks hail/RIVALS Sounds',
+                CustomSoundsPath = 'FrekksHail/RIVALS Custom Sounds.json',
+                CustomSoundsCacheFolder = 'Frekks hail/RIVALS Sounds',
                 MaterialMap = {
                     Ghost = Enum.Material.ForceField,
                     Flat = Enum.Material.Neon,
@@ -26277,8 +26277,8 @@ end);
                     return false
                 end
                 local ok = pcall(function()
-                    if type(makefolder) == 'function' and type(isfolder) == 'function' and not isfolder('frekksHail') then
-                        makefolder('frekksHail')
+                    if type(makefolder) == 'function' and type(isfolder) == 'function' and not isfolder('FrekksHail') then
+                        makefolder('FrekksHail')
                     end
                     writefile(feedback.CustomSoundsPath, game:GetService('HttpService'):JSONEncode({
                         version = 1,
@@ -26456,8 +26456,8 @@ end);
                     local cachePath = string.format('%s/%s%s', feedback.CustomSoundsCacheFolder, feedback.HashSoundUrl(source), extension)
                     local ok = pcall(function()
                         if type(makefolder) == 'function' and type(isfolder) == 'function' then
-                            if not isfolder('frekksHail') then
-                                makefolder('frekksHail')
+                            if not isfolder('FrekksHail') then
+                                makefolder('FrekksHail')
                             end
                             if not isfolder(feedback.CustomSoundsCacheFolder) then
                                 makefolder(feedback.CustomSoundsCacheFolder)
@@ -26512,7 +26512,7 @@ end);
                     return
                 end
                 local sound = Instance.new('Sound')
-                sound.Name = 'frekksHailCombatFeedback'
+                sound.Name = 'FrekksHailCombatFeedback'
                 sound.SoundId = asset
                 sound.Volume = math.max(0, tonumber(volume) or 1)
                 sound.PlaybackSpeed = math.max(0.01, tonumber(pitch) or 1)
@@ -26527,7 +26527,7 @@ end);
                     return
                 end
                 local model = Instance.new('Model')
-                model.Name = 'frekksHailCombatFeedbackChams'
+                model.Name = 'FrekksHailCombatFeedbackChams'
                 local parts = {}
                 local material = feedback.MaterialMap[materialName] or Enum.Material.ForceField
                 local baseTransparency = math.clamp(tonumber(transparency) or 0, 0, 1)
@@ -26583,7 +26583,7 @@ end);
                 })
             end
 
-            -- frekks resolves the shooting item through its whole item registry rather than
+            -- Frekks resolves the shooting item through its whole item registry rather than
             -- the local fighter's list, so tracers also draw for other players' shots.
             -- Remote fighters only populate Items while they are rendered, so with nobody
             -- else on screen this naturally falls back to the local items.
@@ -26660,7 +26660,7 @@ end);
                 far.Position = startPosition
                 far.Parent = Workspace.Terrain
                 local beam = Instance.new('Beam')
-                beam.Name = 'frekksHailBulletTracer'
+                beam.Name = 'FrekksHailBulletTracer'
                 beam.Attachment0 = near
                 beam.Attachment1 = far
                 beam.Color = ColorSequence.new(feedback.ReadOption('P1S18C1', Color3.fromRGB(120, 220, 255)))
@@ -26877,7 +26877,7 @@ end);
             --   nested  (ReplicationChanged, fighterId, ItemChanged, itemId, ShootEffect, payload...)
             -- Locate the effect token wherever it sits. The object it belongs to is the
             -- argument immediately before it, and the payload starts immediately after.
-            -- This matches how frekks reads the stream and covers both layouts.
+            -- This matches how Frekks reads the stream and covers both layouts.
             -- Wire grammar is (kind, objectId, outerEnum, [innerId, innerEnum,] payload...),
             -- so argument 3 is ALWAYS the outer enum. The argument before the effect token
             -- is therefore only the owning object when that token is not sitting at index 4.
@@ -28435,7 +28435,7 @@ end);
                         local subject = entity and entity.Model
                         if not ShouldShow(player, false) then
                             RivalsRuntimeBridge.RecordTargetValidityRejection('team_or_self', subject, player, 'Players')
-                        -- frekks parity (their "Vulnerable" target rule): spawn-
+                        -- Frekks parity (their "Vulnerable" target rule): spawn-
                         -- shielded players are skipped at SELECTION, not just at emission.
                         -- Shots into the shield do nothing, and a shielded best-target used
                         -- to stall the lock and eat silent shots while a vulnerable enemy
@@ -28904,7 +28904,7 @@ end);
 
                 local camera = Workspace.CurrentCamera
                 local ignoreFov = AimbotBridge.IsCameraIgnoreFovEnabled()
-                local targetInfo = GetBestAimbotTarget(true, ignoreFov, Options.frekksCameraFovRadius and Options.frekksCameraFovRadius.Value or 282)
+                local targetInfo = GetBestAimbotTarget(true, ignoreFov, Options.FrekksCameraFovRadius and Options.FrekksCameraFovRadius.Value or 282)
                 local configuredAimPart = Options.P2S1D2 and Options.P2S1D2.Value or 'Auto'
                 if configuredAimPart == 'Random' and targetInfo then
                     local targetIdentity = targetInfo.player or targetInfo.instance
@@ -28937,7 +28937,7 @@ end);
                     return
                 end
 
-                -- frekks parity: never write Camera.CFrame (the native CameraController
+                -- Frekks parity: never write Camera.CFrame (the native CameraController
                 -- re-renders from its Rotation state every frame and stomps the write).
                 -- Rotate the game's own state through CameraController:SetRotation so the
                 -- game renders the turn and shot direction follows.
@@ -28955,7 +28955,7 @@ end);
                 local blendAlpha = math.clamp(1 - math.exp(-frameDelta * (2 + (aimSpeed * 0.58))), 0, 1)
 
                 -- Rotation is Vector2(pitch, yaw) in radians; yaw accumulates past +/-pi,
-                -- so the yaw delta must wrap to the nearest turn (frekks's rotate-towards).
+                -- so the yaw delta must wrap to the nearest turn (Frekks's rotate-towards).
                 local pitch, yaw = CFrame.lookAt(camera.CFrame.Position, worldPosition):ToOrientation()
                 cameraController:SetRotation(Vector2.new(
                     currentRotation.X + (pitch - currentRotation.X) * blendAlpha,
@@ -29200,7 +29200,7 @@ end);
                     local shouldContinuousAim = evaluation.shouldAim and AimbotBridge.ShouldUseAimbotSilentContinuousAim(item)
                     if shouldContinuousAim then
                         local now = os.clock()
-                        local chance = Options.frekksSilentHitChance and Options.frekksSilentHitChance.Value or 100
+                        local chance = Options.FrekksSilentHitChance and Options.FrekksSilentHitChance.Value or 100
                         if AimbotSilentState.ChanceItem ~= item or AimbotSilentState.ChanceValue ~= chance
                             or now >= (AimbotSilentState.ChanceUntil or 0) then
                             AimbotSilentState.ChanceItem = item
@@ -29699,7 +29699,7 @@ end);
             --
             -- InitialLifeAdoptionOpen covers executing the script MID-LIFE: the
             -- shield expired before we loaded, so the latch could never see it
-            -- and every aim feature stayed dark until the next respawn. frekks
+            -- and every aim feature stayed dark until the next respawn. Frekks
             -- has no shield wait at all -- its gate is "player context built +
             -- equipped gun" (HasEquippedGun), both live game state. We adopt
             -- the current life once, at script start, on the same evidence
@@ -29796,9 +29796,9 @@ end);
                     return true
                 end
 
-                -- frekks parity (mid-life execute): adopt the CURRENT life once at
+                -- Frekks parity (mid-life execute): adopt the CURRENT life once at
                 -- script start when the game itself says it is live -- entity in
-                -- world with an item equipped, the same evidence frekks's
+                -- world with an item equipped, the same evidence Frekks's
                 -- HasEquippedGun gate runs on. Without this, executing after your
                 -- spawn shield expired held every aim feature dark until the next
                 -- respawn. One-shot: ResetLocalShieldLatch closes the window on
@@ -30714,7 +30714,7 @@ end);
                 end)
             end
 
-            -- frekks parity: Auto Respawn triggers on the replicated respawn-animation event
+            -- Frekks parity: Auto Respawn triggers on the replicated respawn-animation event
             -- for the local player, not on the death prompt appearing. Their handler is
             -- exactly `enumName == "RespawnNowAnimation" and args[1] == LocalPlayer`, then
             -- the bounded five-request burst. The event is upstream of the button, so it
@@ -30811,10 +30811,10 @@ end);
                 if RivalsRagebot.IsBaitModeEnabled() then
                     RivalsRagebot.UpdateHostileTeleportTracker(now)
                     if RivalsRagebot.IsHostileCheating() then
-                        -- OOB Bait takes over the root this frame; release the frekks ragebot's
+                        -- OOB Bait takes over the root this frame; release the Frekks ragebot's
                         -- part-glue/server-CFrame so the two mechanisms do not fight.
-                        if RivalsRuntimeBridge.ResetfrekksHailRagebot then
-                            RivalsRuntimeBridge.ResetfrekksHailRagebot()
+                        if RivalsRuntimeBridge.ResetFrekksHailRagebot then
+                            RivalsRuntimeBridge.ResetFrekksHailRagebot()
                         end
                         local item = AimbotBridge.ResolveAimbotEquippedItem()
                         local shotReady = AimbotBridge.IsShotImmediatelyReady(item)
@@ -30862,9 +30862,9 @@ end);
                     RivalsRagebotState.LastHoldUpdateAt = 0
                     RivalsRagebotState.PhaseClockSec = 0
                     RivalsRuntimeBridge.RecordCharacterLoadingCheckpoint('Ragebot', false, false)
-                    -- Let the frekks ragebot settle to its disabled state (release glue, restore FFlags).
-                    if RivalsRuntimeBridge.UpdatefrekksHailRagebot then
-                        RivalsRuntimeBridge.UpdatefrekksHailRagebot(deltaTime)
+                    -- Let the Frekks ragebot settle to its disabled state (release glue, restore FFlags).
+                    if RivalsRuntimeBridge.UpdateFrekksHailRagebot then
+                        RivalsRuntimeBridge.UpdateFrekksHailRagebot(deltaTime)
                     end
                     return
                 end
@@ -30872,11 +30872,11 @@ end);
                 local readyToFight = RivalsRuntimeBridge.IsReadyToFight()
                 RivalsRuntimeBridge.RecordCharacterLoadingCheckpoint('Ragebot', readyToFight, true)
 
-                -- frekks ragebot owns the main firing path: a self-contained teleport-to-void
+                -- Frekks ragebot owns the main firing path: a self-contained teleport-to-void
                 -- ragebot (root virtualization + hitbox part-glue + direct fighter-remote fire). It
-                -- self-gates on readiness/enable and reads all frekks settings live.
-                if RivalsRuntimeBridge.UpdatefrekksHailRagebot then
-                    RivalsRuntimeBridge.UpdatefrekksHailRagebot(deltaTime)
+                -- self-gates on readiness/enable and reads all Frekks settings live.
+                if RivalsRuntimeBridge.UpdateFrekksHailRagebot then
+                    RivalsRuntimeBridge.UpdateFrekksHailRagebot(deltaTime)
                 end
             end
 
@@ -30884,9 +30884,9 @@ end);
             RivalsRuntimeBridge.RegisterAutoRespawnSignals = RivalsRagebot.RegisterRespawnSignals
             end
             -- ============================================================================
-            -- frekks Ragebot (1:1 port).
+            -- Frekks Ragebot (1:1 port).
             --
-            -- Self-contained "teleport-to-void" ragebot copied from the frekks RIVALS script.
+            -- Self-contained "teleport-to-void" ragebot copied from the Frekks RIVALS script.
             -- Each Heartbeat, while enabled and a valid target exists:
             --   * root virtualization  - HumanoidRootPart server CFrame is decoupled from the
             --     visible CFrame (RenderStep(First) restores the real CFrame; Heartbeat jumps
@@ -30911,7 +30911,7 @@ end);
             -- and the global environment as Genv, so the kernel stays independent of where it is
             -- emitted.
             --
-            -- This port reproduces frekks's ragebot faithfully, including the parts that are loud:
+            -- This port reproduces Frekks's ragebot faithfully, including the parts that are loud:
             -- it resolves and directly fires the fighter combat remote and uses metatable / getgc /
             -- debug surfaces.
             -- ============================================================================
@@ -30938,7 +30938,7 @@ end);
                 OpenRetryLimit = 5,
                 Unselected = 'Unselected',
                 Priorities = {'1', '2', '3'},
-                ConfigMetadataId = 'frekksHail_RivalsAutoLoadoutProfiles',
+                ConfigMetadataId = 'FrekksHail_RivalsAutoLoadoutProfiles',
                 Catalog = {},
                 LiveValuesBySlot = {},
                 ExcludedWeaponNames = {
@@ -31806,7 +31806,7 @@ end);
                 end
                 mergedObjects[#mergedObjects + 1] = {
                     idx = RivalsAutoLoadout.ConfigMetadataId,
-                    type = 'frekksHailMetadata',
+                    type = 'FrekksHailMetadata',
                     value = RivalsAutoLoadout.NormalizeProfiles(RivalsAutoLoadoutState.Profiles),
                 }
                 decoded.objects = mergedObjects
@@ -31845,7 +31845,7 @@ end);
                 State = {
                     Controller = nil,
                     BoundDuel = nil,
-                    -- frekks-style window memory: what we submitted this vote
+                    -- Frekks-style window memory: what we submitted this vote
                     -- window, reset whenever VoteOptionsType changes. Never
                     -- read server-side LastVote for dedup - it persists across
                     -- windows and permanently blocked repeat picks.
@@ -31990,7 +31990,7 @@ end);
                     return false, 'no_duel'
                 end
 
-                -- frekks's window handler: reset the submission memory when the
+                -- Frekks's window handler: reset the submission memory when the
                 -- vote type changes, then only re-handle the window if nothing
                 -- was submitted yet or our submission got banned out from
                 -- under us (which is also how ban round 2 gets triggered).
@@ -32031,9 +32031,9 @@ end);
                         return false, 'not_dueler'
                     end
                     -- Ranked map-BAN windows replicate MaxMapBansPerTeam and
-                    -- get frekks's bans-remaining gate 1:1. Casual pick windows
+                    -- get Frekks's bans-remaining gate 1:1. Casual pick windows
                     -- carry no MaxMapBansPerTeam (live-verified), so
-                    -- frekks's gate would block them; the game's own UI has no
+                    -- Frekks's gate would block them; the game's own UI has no
                     -- such gate there.
                     if RivalsAutoBan.Read(duel, 'MaxMapBansPerTeam') ~= nil
                         and RivalsAutoBan.BansRemaining(duel, 'Maps') <= 0 then
@@ -32064,7 +32064,7 @@ end);
                 if bansRemaining <= 0 then
                     return false, 'bans_complete'
                 end
-                -- frekks keys the ban list off bans remaining: 2 left -> first
+                -- Frekks keys the ban list off bans remaining: 2 left -> first
                 -- ban list, 1 left -> second.
                 local selectionIds = { 'P8S5D5', 'P8S5D6' }
                 local selectionId = selectionIds[#selectionIds - bansRemaining + 1]
@@ -32229,7 +32229,7 @@ end);
                 if not RivalsTripmineAutomation.IsEnabled() then
                     return
                 end
-                if not __frekks_hook_genv.frekksHailCaps.gate('Subspace Tripmine Auto Trigger', 'firetouchinterest') then
+                if not __frekks_hook_genv.FrekksHailCaps.gate('Subspace Tripmine Auto Trigger', 'firetouchinterest') then
                     return
                 end
 
@@ -33193,7 +33193,7 @@ end);
                     RankLeaderboard = 'P5RANK_LEADERBOARD',
                 },
                 FavoriteKinds = {'Skin', 'Wrap', 'Charm', 'Finisher'},
-                CosmeticPresetPath = 'frekksHail/RIVALS Cosmetic Presets.json',
+                CosmeticPresetPath = 'FrekksHail/RIVALS Cosmetic Presets.json',
             }
             local RivalsEmotes = {
                 Catalog = {},
@@ -34948,7 +34948,7 @@ end);
                 return true
             end
 
-            function RivalsCosmetics.BuildfrekksItemSelection(weaponName)
+            function RivalsCosmetics.BuildFrekksItemSelection(weaponName)
                 local selection = {}
                 local hasSelection = false
                 local skin = RivalsCosmetics.ResolveSkinSelectionValue(weaponName)
@@ -34979,7 +34979,7 @@ end);
                 return hasSelection and selection or nil
             end
 
-            function RivalsCosmetics.BuildfrekksCosmeticPayload(cosmeticName, inverted)
+            function RivalsCosmetics.BuildFrekksCosmeticPayload(cosmeticName, inverted)
                 if cosmeticName == nil or cosmeticName == RIVALS_COSMETIC_NONE then
                     return nil
                 end
@@ -34996,7 +34996,7 @@ end);
                     return weaponData
                 end
 
-                local selection = RivalsCosmetics.BuildfrekksItemSelection(weaponName)
+                local selection = RivalsCosmetics.BuildFrekksItemSelection(weaponName)
                 local patchedNaturalCharm = RivalsCosmetics.PatchRankCharmPayload(weaponData.Charm)
                 local hasOnlyUseFavoritesOverride = false
                 for _, cosmeticType in ipairs(RivalsCosmetics.FavoriteKinds) do
@@ -35012,19 +35012,19 @@ end);
                 local overriddenWeaponData = table.clone(weaponData)
                 if selection ~= nil then
                     if selection.skin ~= nil then
-                        overriddenWeaponData.Skin = RivalsCosmetics.BuildfrekksCosmeticPayload(selection.skin)
+                        overriddenWeaponData.Skin = RivalsCosmetics.BuildFrekksCosmeticPayload(selection.skin)
                     end
                     if selection.wrap ~= nil then
-                        overriddenWeaponData.Wrap = RivalsCosmetics.BuildfrekksCosmeticPayload(
+                        overriddenWeaponData.Wrap = RivalsCosmetics.BuildFrekksCosmeticPayload(
                             selection.wrap.name,
                             selection.wrap.inverted
                         )
                     end
                     if selection.charm ~= nil then
-                        overriddenWeaponData.Charm = RivalsCosmetics.BuildfrekksCosmeticPayload(selection.charm)
+                        overriddenWeaponData.Charm = RivalsCosmetics.BuildFrekksCosmeticPayload(selection.charm)
                     end
                     if selection.finisher ~= nil then
-                        overriddenWeaponData.Finisher = RivalsCosmetics.BuildfrekksCosmeticPayload(selection.finisher)
+                        overriddenWeaponData.Finisher = RivalsCosmetics.BuildFrekksCosmeticPayload(selection.finisher)
                     end
                 end
                 overriddenWeaponData.Charm = RivalsCosmetics.PatchRankCharmPayload(overriddenWeaponData.Charm)
@@ -35105,7 +35105,7 @@ end);
                     return nil
                 end
 
-                -- frekks's inventory contract is intentionally asymmetric: weapon-specific
+                -- Frekks's inventory contract is intentionally asymmetric: weapon-specific
                 -- skins and emotes are booleans, while universal cosmetics map every item.
                 local allItemNames = {}
                 for itemName in pairs(items) do
@@ -35725,7 +35725,7 @@ end);
                 return encoded ~= nil and encoded or key
             end
 
-            function RivalsCosmetics.ApplyfrekksViewModelSelection(weaponName, viewModelData, selection)
+            function RivalsCosmetics.ApplyFrekksViewModelSelection(weaponName, viewModelData, selection)
                 if type(viewModelData) ~= 'table' or type(selection) ~= 'table' then
                     return viewModelData
                 end
@@ -35828,7 +35828,7 @@ end);
                     local clientFighter = rawget(instance, 'ClientFighter')
                     local player = type(clientFighter) == 'table' and rawget(clientFighter, 'Player') or nil
                     local weaponName = rawget(instance, 'Name')
-                    local selection = player == LP and RivalsCosmetics.BuildfrekksItemSelection(weaponName) or nil
+                    local selection = player == LP and RivalsCosmetics.BuildFrekksItemSelection(weaponName) or nil
                     local dataKey = RivalsCosmetics.EncodeGameKey('Data')
                     local viewModelData = type(viewModel) == 'table' and viewModel[dataKey] or nil
                     if type(selection) ~= 'table' or type(viewModelData) ~= 'table' then
@@ -35836,7 +35836,7 @@ end);
                     end
 
                     RivalsCosmetics.EnsureClientItemRestoreData(player, weaponName, viewModelData)
-                    RivalsCosmetics.ApplyfrekksViewModelSelection(weaponName, viewModelData, selection)
+                    RivalsCosmetics.ApplyFrekksViewModelSelection(weaponName, viewModelData, selection)
                 end
 
                 debug.setupvalue(constructor, prototypeIndex, proxy)
@@ -35873,8 +35873,8 @@ end);
                     return false
                 end
 
-                local previousOriginalPlayFinisher = rawget(clientEntity, '__frekksHailOriginalPlayFinisher')
-                if rawget(clientEntity, '__frekksHailFinisherHooked') == true and type(previousOriginalPlayFinisher) == 'function' then
+                local previousOriginalPlayFinisher = rawget(clientEntity, '__FrekksHailOriginalPlayFinisher')
+                if rawget(clientEntity, '__FrekksHailFinisherHooked') == true and type(previousOriginalPlayFinisher) == 'function' then
                     clientEntity._PlayFinisher = previousOriginalPlayFinisher
                 end
 
@@ -35891,8 +35891,8 @@ end);
                 RivalsCosmeticsState.HookedClientEntityClass = clientEntity
                 RivalsCosmeticsState.OriginalClientEntityPlayFinisher = originalPlayFinisher
                 RivalsCosmeticsState.ClientEntityPlayFinisherWrapper = wrappedPlayFinisher
-                clientEntity.__frekksHailOriginalPlayFinisher = originalPlayFinisher
-                clientEntity.__frekksHailFinisherHooked = true
+                clientEntity.__FrekksHailOriginalPlayFinisher = originalPlayFinisher
+                clientEntity.__FrekksHailFinisherHooked = true
                 clientEntity._PlayFinisher = wrappedPlayFinisher
                 RivalsCosmeticsState.ClientEntityFinisherHooked = true
                 return true
@@ -35903,11 +35903,11 @@ end);
                 local originalPlayFinisher = RivalsCosmeticsState.OriginalClientEntityPlayFinisher
                 local wrappedPlayFinisher = RivalsCosmeticsState.ClientEntityPlayFinisherWrapper
                 if type(clientEntity) == 'table' and type(originalPlayFinisher) == 'function' then
-                    if clientEntity._PlayFinisher == wrappedPlayFinisher or rawget(clientEntity, '__frekksHailFinisherHooked') == true then
+                    if clientEntity._PlayFinisher == wrappedPlayFinisher or rawget(clientEntity, '__FrekksHailFinisherHooked') == true then
                         clientEntity._PlayFinisher = originalPlayFinisher
                     end
-                    clientEntity.__frekksHailOriginalPlayFinisher = nil
-                    clientEntity.__frekksHailFinisherHooked = nil
+                    clientEntity.__FrekksHailOriginalPlayFinisher = nil
+                    clientEntity.__FrekksHailFinisherHooked = nil
                 end
 
                 RivalsCosmeticsState.HookedClientEntityClass = nil
@@ -36758,8 +36758,8 @@ end);
                     settings = RivalsCosmeticsState.CosmeticPresetSettings,
                 }
                 return pcall(function()
-                    if not isfolder('frekksHail') then
-                        makefolder('frekksHail')
+                    if not isfolder('FrekksHail') then
+                        makefolder('FrekksHail')
                     end
                     writefile(RivalsCosmetics.CosmeticPresetPath, HttpService:JSONEncode(payload))
                 end)
@@ -37748,7 +37748,7 @@ end);
 
                 if skinName then
                     local sourceModel = RivalsCosmetics.ResolveSkinSourceModel('Subspace Tripmine', skinName)
-                    local clone = RivalsCosmetics.ClonePreviewObject(sourceModel, '__frekksHailTripmineSkin')
+                    local clone = RivalsCosmetics.ClonePreviewObject(sourceModel, '__FrekksHailTripmineSkin')
                     if clone then
                         entry.Clone = clone
                         entry.WrapTarget = clone
@@ -38033,7 +38033,7 @@ end);
                     return false
                 end
 
-                local selection = restoreOnly == true and nil or RivalsCosmetics.BuildfrekksItemSelection(weaponName)
+                local selection = restoreOnly == true and nil or RivalsCosmetics.BuildFrekksItemSelection(weaponName)
                 local signature = RivalsCosmetics.BuildViewModelSelectionSignature(weaponName, selection)
                 local appliedSelection = RivalsCosmeticsState.ViewModelSelectionSignatureByItem[item]
                 if force ~= true and type(appliedSelection) == 'table'
@@ -38048,7 +38048,7 @@ end);
                 local restoreData = RivalsCosmetics.GetClientItemRestoreData(LP, weaponName)
                 local nextData
                 if type(selection) == 'table' then
-                    nextData = RivalsCosmetics.ApplyfrekksViewModelSelection(
+                    nextData = RivalsCosmetics.ApplyFrekksViewModelSelection(
                         weaponName,
                         { Name = weaponName },
                         selection
@@ -38134,7 +38134,7 @@ end);
             function RivalsCosmetics.ApplySelectedWeaponCosmetics()
                 local applied = false
                 for _, weaponName in ipairs(RivalsCosmetics.ResolveWeaponNames()) do
-                    if RivalsCosmetics.BuildfrekksItemSelection(weaponName) ~= nil then
+                    if RivalsCosmetics.BuildFrekksItemSelection(weaponName) ~= nil then
                         applied = RivalsCosmetics.ReloadWeaponViewModel(weaponName) or applied
                     end
                 end
@@ -38549,7 +38549,7 @@ end);
                     ItemLib = RivalsCosmetics.ResolveItemLibrary,
                 },
                 rageActive = function()
-                    local rage = RivalsRuntimeBridge.frekksHailRagebot
+                    local rage = RivalsRuntimeBridge.FrekksHailRagebot
                     return rage ~= nil and rage.IsEnabled()
                 end,
                 decodeLegacy = function(doc)
@@ -38973,7 +38973,7 @@ end);
 
                 function WorldESPState.CreateSoundEffect()
                     local anchor = Instance.new('Part')
-                    anchor.Name = '__frekksHailSoundPulse'
+                    anchor.Name = '__FrekksHailSoundPulse'
                     anchor.Anchored = true
                     anchor.CanCollide = false
                     anchor.CanQuery = false
@@ -38984,7 +38984,7 @@ end);
                     anchor.Parent = Workspace
 
                     local pulse = Instance.new('SphereHandleAdornment')
-                    pulse.Name = '__frekksHailSoundPulseAdornment'
+                    pulse.Name = '__FrekksHailSoundPulseAdornment'
                     pulse.Adornee = anchor
                     pulse.AlwaysOnTop = true
                     pulse.Visible = false
@@ -39202,7 +39202,7 @@ end);
 
             local function BuildEspPreviewModel()
                 local model = Instance.new('Model')
-                model.Name = 'frekksHailEspPreview'
+                model.Name = 'FrekksHailEspPreview'
                 local bodyColor = Color3.fromRGB(116, 124, 137)
                 local limbColor = Color3.fromRGB(82, 90, 104)
                 local torso = CreateEspPreviewPart(model, 'Torso', Vector3.new(2, 2.2, 1), Vector3.new(0, 0.65, 0), bodyColor)
@@ -39392,14 +39392,14 @@ end);
 
             RivalsRuntimeBridge.BuildEspPreview = function(groupbox)
                 -- ========================================================================
-                -- Bounded frekks exception (third, alongside the No Spread
-                -- InputHook and the Ragebot): frekks's exact ESP-preview avatar builder. The
+                -- Bounded Frekks exception (third, alongside the No Spread
+                -- InputHook and the Ragebot): Frekks's exact ESP-preview avatar builder. The
                 -- model is built from the local player's own avatar and lives only inside
                 -- the preview ViewportFrame; it is never applied to any live character. See
                 -- anticheat-findings.md. Declared inside BuildEspPreview because the module
                 -- top scope sits at Luau's 200-register -O0 ceiling.
                 -- ========================================================================
-                -- __frekkS_AVATAR_PREVIEW_BEGIN__
+                -- __FREKKS_AVATAR_PREVIEW_BEGIN__
                 local function BuildEspPreviewAvatarModel()
                     local descriptionOk, description = pcall(function()
                         return Players:GetHumanoidDescriptionFromUserIdAsync(LP.UserId)
@@ -39420,7 +39420,7 @@ end);
                     end
                     return avatarModel
                 end
-                -- __frekkS_AVATAR_PREVIEW_END__
+                -- __FREKKS_AVATAR_PREVIEW_END__
 
                 -- Static scene: no auto-rotate, drag/zoom only.
                 local EspPreviewOrbit = {
@@ -39504,7 +39504,7 @@ end);
                 previewWorldModel.Parent = viewportFrame
                 model.Parent = previewWorldModel
 
-                -- frekks structure: the gradient lives on a frame BEHIND the transparent
+                -- Frekks structure: the gradient lives on a frame BEHIND the transparent
                 -- viewport. A UIGradient directly on the ViewportFrame tints the rendered 3D
                 -- image toward black (live-verified).
                 local backgroundFrame = Instance.new('Frame')
@@ -39606,7 +39606,7 @@ end);
 
                 -- The sample ESP tracks the preview humanoid like the live renderer: project
                 -- the measured body bounds through the viewport camera and fit the target
-                -- rect to them, instead of frekks's fixed centered 0.3 x 0.6 rectangle.
+                -- rect to them, instead of Frekks's fixed centered 0.3 x 0.6 rectangle.
                 UpdateEspPreviewOverlayRect = function()
                     local viewportSize = viewportFrame.AbsoluteSize
                     if viewportSize.X < 1 or viewportSize.Y < 1 then
@@ -40041,10 +40041,10 @@ end);
             end
             local Targeting = P2:AddLeftGroupbox('Targeting')
             local TriggerSettings = P2:AddRightGroupbox('Triggerbot')
-            P2S1:AddToggle('frekksCameraEnabled', {
+            P2S1:AddToggle('FrekksCameraEnabled', {
                 Text = 'Enabled', Default = false,
                 Tooltip = 'Moves the camera while aiming. Can run alongside Silent Aim.',
-            }):AddKeyPicker('frekksCameraKey', {
+            }):AddKeyPicker('FrekksCameraKey', {
                 Default = 'Unknown', Mode = 'Always', Text = 'Aimbot', NoUI = false,
             })
             local aimbotToggle = SilentSettings:AddToggle('P2S1T1', {
@@ -40060,7 +40060,7 @@ end);
             })
             RefreshAimbotEnabledToggleKeypickerState = AimbotBridge.SyncAimbotToggleKeypickerToUi(aimbotToggle, aimbotKeypicker)
 
-            SilentSettings:AddSlider('frekksSilentHitChance', {
+            SilentSettings:AddSlider('FrekksSilentHitChance', {
                 Text = 'Hit Chance', Default = 100, Min = 0, Max = 100,
                 Rounding = 0, Suffix = '%',
                 Tooltip = 'Chance to apply Silent Aim. Skipped shots retain your normal aim.',
@@ -40078,7 +40078,7 @@ end);
                 Compact = true,
                 Tooltip = 'Only while aiming.',
             })
-            CameraAimSettings:SetupDependencies({{ Toggles.frekksCameraEnabled, true }})
+            CameraAimSettings:SetupDependencies({{ Toggles.FrekksCameraEnabled, true }})
 
             SilentSettings:AddToggle('P2S1T3', {
                 Text = 'Ignore FOV',
@@ -40102,20 +40102,20 @@ end);
                 Text = 'Show FOV',
                 Default = true,
                 Tooltip = 'Displays the Silent Aim FOV circle.',
-            }):AddColorPicker('frekksSilentFovColor', { Default = Color3.fromRGB(255, 70, 70), Transparency = 0.28, Title = 'Silent Aim FOV Color' })
+            }):AddColorPicker('FrekksSilentFovColor', { Default = Color3.fromRGB(255, 70, 70), Transparency = 0.28, Title = 'Silent Aim FOV Color' })
 
-            SilentSettings:AddSlider('frekksSilentFovThickness', {
+            SilentSettings:AddSlider('FrekksSilentFovThickness', {
                 Text = 'FOV Thickness', Default = 1.5, Min = 1, Max = 5, Rounding = 1,
             })
-            P2S1:AddToggle('frekksCameraIgnoreFov', { Text = 'Ignore FOV', Default = false })
-            P2S1:AddToggle('frekksCameraShowFov', { Text = 'Show FOV', Default = true })
-                :AddColorPicker('frekksCameraFovColor', {
+            P2S1:AddToggle('FrekksCameraIgnoreFov', { Text = 'Ignore FOV', Default = false })
+            P2S1:AddToggle('FrekksCameraShowFov', { Text = 'Show FOV', Default = true })
+                :AddColorPicker('FrekksCameraFovColor', {
                     Default = Color3.fromRGB(255, 255, 255), Transparency = 0.28, Title = 'Aimbot FOV Color',
                 })
-            P2S1:AddSlider('frekksCameraFovRadius', {
+            P2S1:AddSlider('FrekksCameraFovRadius', {
                 Text = 'FOV Radius', Default = 70, Min = 25, Max = 500, Rounding = 0, Suffix = ' px',
             })
-            P2S1:AddSlider('frekksCameraFovThickness', {
+            P2S1:AddSlider('FrekksCameraFovThickness', {
                 Text = 'FOV Thickness', Default = 1.5, Min = 1, Max = 5, Rounding = 1,
             })
 
@@ -41359,9 +41359,9 @@ end);
                     Text = 'Ragebot',
                     NoUI = false,
                 })
-                -- Ragebot settings match frekks's recovered page ("gV" builder, source ~258008):
+                -- Ragebot settings match Frekks's recovered page ("gV" builder, source ~258008):
                 -- Stability 0..1.5 step .001, Shoot Frames 1..5, Prioritize Hackers, per-weapon
-                -- toggles, On Empty, and the Random/Translocate evasion groups. frekks exposes NO
+                -- toggles, On Empty, and the Random/Translocate evasion groups. Frekks exposes NO
                 -- ProjectileBreaker sliders (hardcoded defaults) and its Weapon Priority reorder
                 -- (OrderedList) has no Obsidian equivalent, so priority stays config order.
                 RagebotGroup:AddToggle('P8S4T4', {
@@ -42756,8 +42756,8 @@ end);
                 RivalsRuntimeBridge.PlayerSpoofer.Destroy()
                 RivalsRuntimeBridge.AnimationPlayer.Destroy()
                 RivalsRuntimeBridge.MovementRecorder.Destroy()
-                if RivalsRuntimeBridge.DestroyfrekksHailRagebot then
-                    RivalsRuntimeBridge.DestroyfrekksHailRagebot()
+                if RivalsRuntimeBridge.DestroyFrekksHailRagebot then
+                    RivalsRuntimeBridge.DestroyFrekksHailRagebot()
                 end
                 RivalsRuntimeBridge.CombatFeedback.Destroy()
                 RivalsRuntimeBridge.ResetRivalsCosmetics()
@@ -43251,9 +43251,9 @@ end);
                     { idx = 'P1S27T8', type = 'Toggle', value = false },
                     { idx = 'P2S1T1', type = 'Toggle', value = true },
                     { idx = 'P2S1T1K', type = 'KeyPicker', mode = 'Always', key = 'Unknown', modifiers = {} },
-                    { idx = 'frekksCameraEnabled', type = 'Toggle', value = false },
-                    { idx = 'frekksCameraKey', type = 'KeyPicker', mode = 'Always', key = 'Unknown' },
-                    { idx = 'frekksSilentHitChance', type = 'Slider', value = 100 },
+                    { idx = 'FrekksCameraEnabled', type = 'Toggle', value = false },
+                    { idx = 'FrekksCameraKey', type = 'KeyPicker', mode = 'Always', key = 'Unknown' },
+                    { idx = 'FrekksSilentHitChance', type = 'Slider', value = 100 },
                     { idx = 'P2S1T3', type = 'Toggle', value = false },
                     { idx = 'P2S1T5', type = 'Toggle', value = true },
                     { idx = 'P2S1D2', type = 'Dropdown', value = 'Auto' },
@@ -43266,13 +43266,13 @@ end);
                     { idx = 'P2S1S11', type = 'Slider', value = 12 },
                     { idx = 'P2S1S12', type = 'Slider', value = 30 },
                     { idx = 'P2S1S2', type = 'Slider', value = 85 },
-                    { idx = 'frekksCameraIgnoreFov', type = 'Toggle', value = false },
-                    { idx = 'frekksCameraShowFov', type = 'Toggle', value = true },
-                    { idx = 'frekksCameraFovRadius', type = 'Slider', value = 70 },
-                    { idx = 'frekksCameraFovThickness', type = 'Slider', value = 1.5 },
-                    { idx = 'frekksSilentFovThickness', type = 'Slider', value = 1.5 },
-                    { idx = 'frekksCameraFovColor', type = 'ColorPicker', value = 'ffffff', transparency = 0.28 },
-                    { idx = 'frekksSilentFovColor', type = 'ColorPicker', value = 'ff4646', transparency = 0.28 },
+                    { idx = 'FrekksCameraIgnoreFov', type = 'Toggle', value = false },
+                    { idx = 'FrekksCameraShowFov', type = 'Toggle', value = true },
+                    { idx = 'FrekksCameraFovRadius', type = 'Slider', value = 70 },
+                    { idx = 'FrekksCameraFovThickness', type = 'Slider', value = 1.5 },
+                    { idx = 'FrekksSilentFovThickness', type = 'Slider', value = 1.5 },
+                    { idx = 'FrekksCameraFovColor', type = 'ColorPicker', value = 'ffffff', transparency = 0.28 },
+                    { idx = 'FrekksSilentFovColor', type = 'ColorPicker', value = 'ff4646', transparency = 0.28 },
                     { idx = 'P2S1T6', type = 'Toggle', value = false },
                     { idx = 'P2S1T7K', type = 'KeyPicker', mode = 'Always', key = 'Unknown', modifiers = {} },
                     { idx = 'P2S1S7', type = 'Slider', value = 0 },
@@ -43512,7 +43512,7 @@ end);
                 -- so re-loading a config must not replay the preset over saved tweaks.
                 SaveManager:SetIgnoreIndexes({ 'P1S32D1', 'P1S26D6', 'P1S14D1',
                     'P5EDITOR_WEAPON', 'P5EDITOR_SKIN', 'P5EDITOR_CHARM', 'P5EDITOR_WRAP',
-                    'P5EDITOR_FINISHER', 'P5EDITOR_WRAPINV', 'frekksCosmeticsEmote' })
+                    'P5EDITOR_FINISHER', 'P5EDITOR_WRAPINV', 'FrekksCosmeticsEmote' })
 
                 local SharedUI = GameBootstrap.create_standard_shared_ui({
                     ui_settings = UISettings,
@@ -43706,7 +43706,7 @@ end);
 
     else
         if Library and type(Library.Notify) == 'function' then
-            Library:Notify({ Title = 'frekksHail', Description = 'This script only supports RIVALS.', Time = 5 })
+            Library:Notify({ Title = 'FrekksHail', Description = 'This script only supports RIVALS.', Time = 5 })
         end
     end
 
@@ -43719,7 +43719,7 @@ end);
             ErrorReporter.report(__game_err, nil, 'game_init')
         end
         if Library and type(Library.Notify) == 'function' then
-            Library:Notify({ Title = 'frekksHail', Description = 'Fatal error: ' .. tostring(__game_err), Time = 8 })
+            Library:Notify({ Title = 'FrekksHail', Description = 'Fatal error: ' .. tostring(__game_err), Time = 8 })
         end
     end
 
