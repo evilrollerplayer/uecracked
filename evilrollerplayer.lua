@@ -9928,7 +9928,7 @@ __frekks_hook_shared.script_paths = function()
 -- shows; StorageRoot is the folder name on disk (renaming it orphans any configs
 -- already saved under the old name).
 local DisplayName = "Evil Roller Player KYOTOO CRACKED THIS"
-local StorageRoot = 'frekks Hail v3'
+local StorageRoot = 'evilrollerplayer.lua'
 
 -- Where queue_on_teleport should re-read the script from when "Auto Execute on
 -- Teleport" is enabled. Save the built script to this path (relative to your
